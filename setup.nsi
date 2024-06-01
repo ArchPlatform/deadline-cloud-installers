@@ -486,7 +486,7 @@ Function .onInstFailed
 FunctionEnd
 
 Function .onUserAbort
-    MessageBox MB_YESNO "Are you sure you want to cancel?" IDYES NoCancelAbort
+    MessageBox MB_YESNO "Do you want to abort the installation process?" IDYES NoCancelAbort
         Abort ; causes installer to not quit.
     NoCancelAbort:
         Call RemoveAll
