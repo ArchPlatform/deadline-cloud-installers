@@ -137,27 +137,8 @@ Var AfterEffectsVersion
 !define MUI_ABORTWARNING
 !define MUI_ABORTWARNING_TEXT "Do you want to abort the installation process?"
 
-; !define MUI_PAGE_HEADER_TEXT "Alex Hughes Presents:"
-; !define MUI_PAGE_HEADER_SUBTEXT "Arch Platform Technologies (c) 2024"
-
 !define MUI_WELCOMEPAGE_TITLE "Setup - AWS Deadline Cloud Submitter"
 !define MUI_WELCOMEPAGE_TEXT "Welcome to the AWS Deadline Cloud Submitter Setup Wizard."
-;Extra space for the title area
-;!insertmacro MUI_WELCOMEPAGE_TITLE_3LINES
-
-
-;!define MUI_LICENSEPAGE_TEXT_TOP "You will not read this but you will agree to it:"
-;!define MUI_LICENSEPAGE_TEXT_BOTTOM "Now you will click the box."
-;!define MUI_LICENSEPAGE_BUTTON "I agree"
-;Display a checkbox the user has to check to agree with the license terms.
-;!define MUI_LICENSEPAGE_CHECKBOX
-;!define MUI_LICENSEPAGE_CHECKBOX_TEXT "Fill me up baby."
-
-;*OR*
-;Display two radio buttons to allow the user to choose between accepting the license terms or not.
-;!define MUI_LICENSEPAGE_RADIOBUTTONS
-;!define MUI_LICENSEPAGE_RADIOBUTTONS_TEXT_ACCEPT "MUI_LICENSEPAGE_RADIOBUTTONS_TEXT_ACCEPT"
-;!define MUI_LICENSEPAGE_RADIOBUTTONS_TEXT_DECLINE "MUI_LICENSEPAGE_RADIOBUTTONS_TEXT_DECLINE"
 
 !define MUI_COMPONENTSPAGE_TEXT_TOP "Select the components you want to install; clear the components you do not want to install. Click Next when you are ready to continue."
 ;!define MUI_COMPONENTSPAGE_TEXT_COMPLIST " "
@@ -175,53 +156,14 @@ Var AfterEffectsVersion
 !define MUI_DIRECTORYPAGE_TEXT_DESTINATION "Installation Directory"
 !define MUI_DIRECTORYPAGE_VARIABLE $INSTDIR
 
-;!define MUI_INSTFILESPAGE_FINISHHEADER_TEXT "Installation."
-;!define MUI_INSTFILESPAGE_FINISHHEADER_SUBTEXT "Now there are monkeys loose. Sick sick monkeys."
-;!define MUI_INSTFILESPAGE_ABORTHEADER_TEXT "Installation aborted."
-;!define MUI_INSTFILESPAGE_ABORTHEADER_SUBTEXT "The AWS Deadline Cloud Submitter installation has been aborted."
-
 !define MUI_FINISHPAGE_TITLE "Completing the AWS Deadline Cloud Submitter Setup Wizard"
-;!define MUI_FINISHPAGE_TITLE_3LINES
 !define MUI_FINISHPAGE_TEXT "Set has finished installing AWS Deadline Cloud Submitter on your computer."
-;Extra space for the text area (if using checkboxes).
-;!define MUI_FINISHPAGE_TEXT_LARGE
-;!define MUI_FINISHPAGE_BUTTON "Booyah."
-;!define MUI_FINISHPAGE_CANCEL_ENABLED
-;!define MUI_FINISHPAGE_TEXT_REBOOT "MUI_FINISHPAGE_TEXT_REBOOT"
-;!define MUI_FINISHPAGE_TEXT_REBOOTNOW "MUI_FINISHPAGE_TEXT_REBOOTNOW"
-;!define MUI_FINISHPAGE_TEXT_REBOOTLATER "MUI_FINISHPAGE_TEXT_REBOOTLATER"
-;!define MUI_FINISHPAGE_TEXT_REBOOTLATER_DEFAULT
-
-;!define MUI_FINISHPAGE_RUN "some_exe_file"
-;!define MUI_FINISHPAGE_RUN_TEXT "MUI_FINISHPAGE_RUN_TEXT"
-;Parameters for the application to run. Don't forget to escape double quotes in the value (use $\").
-;!define MUI_FINISHPAGE_RUN_PARAMETERS
-;!define MUI_FINISHPAGE_RUN_NOTCHECKED
-;!define MUI_FINISHPAGE_RUN_FUNCTION
-
-;!define MUI_FINISHPAGE_SHOWREADME "somefile.txt"
-;Don't make this label too long or it'll cut on top and bottom.
-;!define MUI_FINISHPAGE_SHOWREADME_TEXT "This would open a README if there was one."
-;!define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
-;MUI_FINISHPAGE_SHOWREADME_FUNCTION Function
-
-;!define MUI_FINISHPAGE_LINK "This goes to reddit just because."
-;!define MUI_FINISHPAGE_LINK_LOCATION "http://www.reddit.com/"
-;!define MUI_FINISHPAGE_LINK_COLOR RRGGBB
 
 !define MUI_FINISHPAGE_NOREBOOTSUPPORT
-
-;!define MUI_UNCONFIRMPAGE_TEXT_TOP "MUI_UNCONFIRMPAGE_TEXT_TOP"
-;!define MUI_UNCONFIRMPAGE_TEXT_LOCATION "MUI_UNCONFIRMPAGE_TEXT_LOCATION"
-
-;hide descriptions on hover
-;!define MUI_COMPONENTSPAGE_NODESC
-
 ;--------------------------------
 ;Pages
 
 !insertmacro MUI_PAGE_WELCOME
-;!insertmacro MUI_PAGE_LICENSE "License.txt"
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_COMPONENTS
 Page Custom CheckInstalledAfterEffectsVersion
@@ -245,8 +187,6 @@ Page Custom CreateInstallationOverview LeaveInstallationOverview
 
 ;--------------------------------
 ;Installer Sections
-
-
 
 Section "Deadline Cloud" deadline_cloud
 	;MessageBox MB_OK "Deadline Cloud"
@@ -597,12 +537,6 @@ FunctionEnd
 Function CreateInstallationOverview
     !insertmacro MUI_HEADER_TEXT "Arch Platform Technologies" "Path to the Deadline Cloud Unreal Plugin directory"
     nsDialogs::Create 1018
-    ;${NSD_CreateListBox} 0 0 100% 100% ""
-    ;Pop $InstallationOverviewListBox
-
-    ;SendMessage $InstallationOverviewListBox ${LB_ADDSTRING} 0 "STR:Simple entry"
-    ;SendMessage $InstallationOverviewListBox ${LB_ADDSTRING} 0 "STR:Another entry"
-    ;SendMessage $InstallationOverviewListBox ${LB_ADDSTRING} 0 "STR:Blah"
     ${NSD_CreateLabel} 0 0 100% 18u "Review the installation"
     Pop $0
 
@@ -638,42 +572,7 @@ Function CreateInstallationOverview
 
     ${NSD_CreateTextMultiline} 0 10% 100% 85% "$InstallationOverviewMessage"
     Pop $InstallationOverviewListBox
-    ;!insertmacro SetSectionFlag ${InstallationOverviewListBox} ${SF_RO}
-    ;${NSD_GetState} $hwnd $0
 	SendMessage $InstallationOverviewListBox ${EM_SETREADONLY} 1 0
-
-;    ${NSD_CreateGroupBox} 10% 10u 80% 62u "PostgreSQL Database Settings"
-;    Pop $0
-;
-;        ${NSD_CreateLabel} 20% 26u 20% 10u "Username:"
-;        Pop $0
-;
-;        ${NSD_CreateText} 40% 24u 40% 12u "postgres"
-;        Pop $TextUser
-;
-;        ${NSD_CreateLabel} 20% 40u 20% 10u "Password:"
-;        Pop $0
-;
-;        ${NSD_CreatePassword} 40% 38u 40% 12u ""
-;        Pop $TextPass
-;
-;        ${NSD_CreateLabel} 20% 54u 20% 10u "New Database:"
-;        Pop $0
-;
-;        ${NSD_CreateText} 40% 52u 40% 12u "mydb"
-;        Pop $TextDbName
-;
-;    ${NSD_CreateGroupBox} 5% 86u 90% 34u "PostgreSQL Install Path"
-;    Pop $0
-;
-;        ${NSD_CreateDirRequest} 15% 100u 49% 12u "$PROGRAMFILES64\PostgreSQL\10"
-;        Pop $TextPgDir
-;
-;        ${NSD_CreateBrowseButton} 65% 100u 20% 12u "Browse..."
-;        Pop $0
-;        ${NSD_OnClick} $0 OnDirBrowse
-
-
     nsDialogs::Show
 FunctionEnd
 
