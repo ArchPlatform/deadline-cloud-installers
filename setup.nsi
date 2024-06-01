@@ -7,8 +7,7 @@ Unicode True
 !insertmacro Locate
 
 Var /GLOBAL switch_overwrite
-StrCpy $switch_overwrite 0
-!include 'MoveFileFolder.nsh'
+!include .\windows\MoveFileFolder.nsh
 
 !include .\windows\StrRep.nsh
 !include .\windows\ReplaceInFile.nsh
@@ -120,6 +119,7 @@ Var AfterEffectsVersion
 !define CINEMA_4D_PLUGIN_NAME "DeadlineCloud-0.3.2.pyp"
 !define CINEMA_4D_LIBRARY_NAME "deadline_cloud_for_cinema_4d-0.3.2-py3-none-any.whl"
 !define AFTER_EFFECTS_PLUGIN_NAME "DeadlineCloudSubmitter-0.1.2.jsx"
+!define MAYA_LIBRARY_NAME "deadline_cloud_for_maya-0.14.1-py3-none-any.whl"
 
 ;--------------------------------
 ; General Image settings
@@ -296,7 +296,6 @@ SectionEnd
 LangString DESC_deadline_cloud ${LANG_ENGLISH} "CLI for interfacing with Deadline."
 
 Section "Deadline Cloud for Maya" deadline_cloud_for_maya
-	MessageBox MB_OK "Deadline Cloud for Maya"
 	/*
 Deadline Cloud for Maya 2024
 - Compatible with Maya 2024.
@@ -308,25 +307,26 @@ Deadline Cloud for Maya 2024
 	*/
 	${LogLine} "$INSTDIR\install.log" "Starting installing Deadline Cloud Maya"
     SetShellVarContext all
-    ${LogLine} "$INSTDIR\install.log" "Creating temp directory"
-    CreateDirectory "$INSTDIR\tmp"
     CreateDirectory "$INSTDIR\Submitters\Maya"
     ${LogLine} "$INSTDIR\install.log" "Creating Maya scripts directory"
     CreateDirectory "$INSTDIR\Submitters\Maya\scripts"
 
-    ; Install the pyp plugin
-    SetOutPath "$INSTDIR\Submitters\Maya\scripts"
+    ; Install the deadline-cloud-for-maya libraries
+    SetOutPath "$INSTDIR\tmp"
     ${LogLine} "$INSTDIR\install.log" "Extracting ${MAYA_LIBRARY_NAME}"
+    File ".\dist\${MAYA_LIBRARY_NAME}"
     nsisunz::UnzipToStack "$INSTDIR\tmp\${MAYA_LIBRARY_NAME}" "$INSTDIR\Submitters\Maya\scripts"
     Pop $0
     StrCmp $0 "success" ok
       DetailPrint "$0" ;print error message to log
+      ${LogLine} "$INSTDIR\install.log" "Error: $0"
       Goto skiplist
     ok:
     ; Print out list of files extracted to log
     next:
       Pop $0
       DetailPrint $0
+      ${LogLine} "$INSTDIR\install.log" "  $0"
     StrCmp $0 "" 0 next ; pop strings until a blank one arrives
 
     skiplist:
@@ -412,8 +412,6 @@ Deadline Cloud for Cinema 4D S26
 	*/
 	${LogLine} "$INSTDIR\install.log" "Starting installing Deadline Cloud Cinema 4D"
     SetShellVarContext all
-    ${LogLine} "$INSTDIR\install.log" "Creating temp directory"
-    CreateDirectory "$INSTDIR\tmp"
     CreateDirectory "$INSTDIR\Submitters\Cinema4D"
     ${LogLine} "$INSTDIR\install.log" "Creating C4D Plugins directory"
     CreateDirectory "$INSTDIR\Submitters\Cinema4D\Plugins"
@@ -436,12 +434,14 @@ Deadline Cloud for Cinema 4D S26
     Pop $0
     StrCmp $0 "success" ok
       DetailPrint "$0" ;print error message to log
+      ${LogLine} "$INSTDIR\install.log" "Error: $0"
       Goto skiplist
     ok:
     ; Print out list of files extracted to log
     next:
       Pop $0
       DetailPrint $0
+      ${LogLine} "$INSTDIR\install.log" "  $0"
     StrCmp $0 "" 0 next ; pop strings until a blank one arrives
 
     skiplist:
@@ -491,6 +491,8 @@ LangString DESC_deadline_cloud_for_after_effects ${LANG_ENGLISH} "Cinema 4D plug
 ;--------------------------------
 ; Functions
 Function .onInit
+
+    StrCpy $switch_overwrite 0
     InitPluginsDir
     StrCpy $INSTDIR "C:\Program Files\DeadlineCloudSubmitter"
 
@@ -522,12 +524,12 @@ Function .onInstFailed
     Call RemoveAll
 FunctionEnd
 
-Function .onUserAbort
-    MessageBox MB_YESNO "Do you want to abort the installation process?" IDYES NoCancelAbort
-        Abort ; causes installer to not quit.
-    NoCancelAbort:
-        Call RemoveAll
-FunctionEnd
+;Function .onUserAbort
+;    MessageBox MB_YESNO "Do you want to abort the installation process?" IDYES NoCancelAbort
+;        Abort ; causes installer to not quit.
+;    NoCancelAbort:
+;        Call RemoveAll
+;FunctionEnd
 
 Function CheckInstalledAfterEffectsVersion
     ${If} ${SectionIsSelected} ${deadline_cloud_for_after_effects}
@@ -694,6 +696,7 @@ Section
     WriteRegStr HKLM "${UNINST_KEY}" "DisplayIcon" "$INSTDIR\resources\icon.ico"
     WriteRegStr HKLM "${UNINST_KEY}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
     WriteRegStr HKLM "${UNINST_KEY}" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
+    RMDir /r "$INSTDIR\tmp"
     ${LogLine} "$INSTDIR\install.log" "Installation finished"
     Sleep 500
     ;Quit
@@ -714,8 +717,28 @@ Function RemoveDeadlineClient
     DeleteRegKey HKCR "deadline"
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Deadline Client successfully uninstalled"
 FunctionEnd
+Function un.RemoveDeadlineClient
+    SetShellVarContext all
+    SetRegView 64
+    ; Deadline Client
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "Uninstalling Deadline Client"
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing $INSTDIR\DeadlineClient"
+    RMDir /r "$INSTDIR\DeadlineClient"
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing PATH modifications"
+    EnVar::DeleteValue "path" "$INSTDIR\DeadlineClient"
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Uninstalling Deadline Client URI Handler"
+    DeleteRegKey HKCR "deadline"
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Deadline Client successfully uninstalled"
+FunctionEnd
 
 Function RemoveDeadlineCloudForMaya
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "Uninstalling Deadline Cloud for Maya"
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing MAYA_MODULE_PATH modifications"
+    EnVar::DeleteValue "MAYA_MODULE_PATH" "$INSTDIR\Submitters\Maya"
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing $INSTDIR\Submitters\Maya"
+    RMDir /r "$INSTDIR\Submitters\Maya"
+FunctionEnd
+Function un.RemoveDeadlineCloudForMaya
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "Uninstalling Deadline Cloud for Maya"
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing MAYA_MODULE_PATH modifications"
     EnVar::DeleteValue "MAYA_MODULE_PATH" "$INSTDIR\Submitters\Maya"
@@ -734,8 +757,32 @@ Function RemoveDeadlineCloudForCinema4D
     EnVar::DeleteValue "CINEMA4D_DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Deadline Cloud for Cinema 4D successfully uninstalled"
 FunctionEnd
+Function un.RemoveDeadlineCloudForCinema4D
+    SetShellVarContext all
+    SetRegView 64
+    ; Deadline Cloud for Cinema 4D
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "Uninstalling Deadline Cloud for Cinema 4D"
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing g_additionalModulePAth modifications"
+    EnVar::DeleteValue "g_additionalModulePath" "$INSTDIR\Submitters\Cinema4D\Plugins"
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing CINEMA4D_DEADLINE_CLOUD_PYTHONPATH modifications"
+    EnVar::DeleteValue "CINEMA4D_DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Deadline Cloud for Cinema 4D successfully uninstalled"
+FunctionEnd
 
 Function RemoveDeadlineCloudForAfterEffects
+    SetShellVarContext all
+    SetRegView 64
+    ; Deadline Cloud for After Effects
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "Uninstalling Deadline Cloud for After Effects"
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Deleting DeadlineCloudSubmitter.jsx from After Effects 2023"
+    Delete "C:\Program Files\Adobe\Adobe After Effects 2023\Support Files\Scripts\DeadlineCloudSubmitter.jsx"
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Deleting DeadlineCloudSubmitter.jsx from After Effects 2024"
+    Delete "C:\Program Files\Adobe\Adobe After Effects 2024\Support Files\Scripts\DeadlineCloudSubmitter.jsx"
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Deleting DeadlineCloudSubmitter.jsx from After Effects 2025"
+    Delete "C:\Program Files\Adobe\Adobe After Effects 2025\Support Files\Scripts\DeadlineCloudSubmitter.jsx"
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Deadline Cloud for After Effects successfully uninstalled"
+FunctionEnd
+Function un.RemoveDeadlineCloudForAfterEffects
     SetShellVarContext all
     SetRegView 64
     ; Deadline Cloud for After Effects
@@ -763,10 +810,24 @@ Function RemoveAll
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "Unregistering Deadline Cloud Submitters with Windows"
     DeleteRegKey HKLM "${UNINST_KEY}"
 FunctionEnd
+Function un.RemoveAll
+    SetShellVarContext all
+    SetRegView 64
+
+    Call un.RemoveDeadlineClient
+    Call un.RemoveDeadlineCloudForMaya
+    Call un.RemoveDeadlineCloudForCinema4D
+    Call un.RemoveDeadlineCloudForAfterEffects
+
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "Removing any remaining files"
+    RMDir /r "$INSTDIR"
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "Unregistering Deadline Cloud Submitters with Windows"
+    DeleteRegKey HKLM "${UNINST_KEY}"
+FunctionEnd
 
 Section "Uninstall"
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "Starting uninstall"
-    Call RemoveAll
+    Call un.RemoveAll
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "Uninstall finished"
     MessageBox MB_OK "Uninstall Finished"
 
