@@ -4,6 +4,11 @@ Unicode True
 !addplugindir ".\windows"
 !include LogicLib.nsh
 !include FileFunc.nsh
+!insertmacro Locate
+
+Var /GLOBAL switch_overwrite
+StrCpy $switch_overwrite 0
+!include 'MoveFileFolder.nsh'
 
 !include .\windows\StrRep.nsh
 !include .\windows\ReplaceInFile.nsh
@@ -298,9 +303,41 @@ Deadline Cloud for Maya 2024
 - Install the integrated Maya submitter files to the installation directory.
 - Register the plug-in with Maya by creating or updating the MAYA_MODULE_PATH environment variable.
 
-- Look for compatible Maya versions (2023+)
--
+- whl goes into $INST\Submitters\Maya\scripts
+- Move $INST\Submitters\Maya\scripts\deadline\maya_submitter\maya_submitter_plugin\* to $INST\Submitters\Maya\
 	*/
+	${LogLine} "$INSTDIR\install.log" "Starting installing Deadline Cloud Maya"
+    SetShellVarContext all
+    ${LogLine} "$INSTDIR\install.log" "Creating temp directory"
+    CreateDirectory "$INSTDIR\tmp"
+    CreateDirectory "$INSTDIR\Submitters\Maya"
+    ${LogLine} "$INSTDIR\install.log" "Creating Maya scripts directory"
+    CreateDirectory "$INSTDIR\Submitters\Maya\scripts"
+
+    ; Install the pyp plugin
+    SetOutPath "$INSTDIR\Submitters\Maya\scripts"
+    ${LogLine} "$INSTDIR\install.log" "Extracting ${MAYA_LIBRARY_NAME}"
+    nsisunz::UnzipToStack "$INSTDIR\tmp\${MAYA_LIBRARY_NAME}" "$INSTDIR\Submitters\Maya\scripts"
+    Pop $0
+    StrCmp $0 "success" ok
+      DetailPrint "$0" ;print error message to log
+      Goto skiplist
+    ok:
+    ; Print out list of files extracted to log
+    next:
+      Pop $0
+      DetailPrint $0
+    StrCmp $0 "" 0 next ; pop strings until a blank one arrives
+
+    skiplist:
+
+    ${LogLine} "$INSTDIR\install.log" "Moving bundled module files to $INSTDIR\Submitters\Maya"
+    !insertmacro MoveFolder "$INSTDIR\Submitters\Maya\scripts\deadline\maya_submitter\maya_submitter_plugin\" "$INSTDIR\Submitters\Maya\" "*.*"
+    RMDir /r "$INSTDIR\Submitters\Maya\scripts\deadline\maya_submitter\maya_submitter_plugin"
+
+    ${LogLine} "$INSTDIR\install.log" "Adding MAYA_MODULE_PATH variable"
+    EnVar::AddValue "MAYA_MODULE_PATH" "$INSTDIR\Submitters\Maya"
+    ${LogLine} "$INSTDIR\install.log" "Finished installing Deadline Cloud Maya"
 SectionEnd
 LangString DESC_deadline_cloud_for_maya ${LANG_ENGLISH} "Maya plugin for submitting jobs to AWS Deadline Cloud. Compatible with Maya 2023+"
 
@@ -678,6 +715,14 @@ Function RemoveDeadlineClient
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Deadline Client successfully uninstalled"
 FunctionEnd
 
+Function RemoveDeadlineCloudForMaya
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "Uninstalling Deadline Cloud for Maya"
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing MAYA_MODULE_PATH modifications"
+    EnVar::DeleteValue "MAYA_MODULE_PATH" "$INSTDIR\Submitters\Maya"
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing $INSTDIR\Submitters\Maya"
+    RMDir /r "$INSTDIR\Submitters\Maya"
+FunctionEnd
+
 Function RemoveDeadlineCloudForCinema4D
     SetShellVarContext all
     SetRegView 64
@@ -709,6 +754,7 @@ Function RemoveAll
     SetRegView 64
 
     Call RemoveDeadlineClient
+    Call RemoveDeadlineCloudForMaya
     Call RemoveDeadlineCloudForCinema4D
     Call RemoveDeadlineCloudForAfterEffects
 
