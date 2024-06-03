@@ -436,7 +436,7 @@ Deadline Cloud for After Effects 2023
     ${Next}
     ${LogLine} "$INSTDIR\install.log" "Finished installing Deadline Cloud After Effects"
 SectionEnd
-LangString DESC_deadline_cloud_for_after_effects ${LANG_ENGLISH} "Cinema 4D plugin for submitting jobs to AWS Deadline Cloud. Compatible with Cinema 4D S26+"
+LangString DESC_deadline_cloud_for_after_effects ${LANG_ENGLISH} "After Effects plugin for submitting jobs to AWS Deadline Cloud. Compatible with After Effects 2023+"
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${deadline_cloud} $(DESC_deadline_cloud)
