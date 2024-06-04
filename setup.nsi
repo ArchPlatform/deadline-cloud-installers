@@ -21,6 +21,7 @@ Var /GLOBAL switch_overwrite
 Push `${line}`
 Push "${file}"
 !insertmacro CallArtificialFunction WriteLineToFileHelper
+DetailPrint "${line}"
 !macroend
 !macro WriteLineToFileHelper
 Exch $0
@@ -211,14 +212,12 @@ Section "Deadline Cloud" deadline_cloud
     nsisunz::UnzipToStack "$INSTDIR\tmp\${DEADLINE_CLOUD_EXECUTABLE_NAME}" "$INSTDIR\DeadlineClient"
     Pop $0
     StrCmp $0 "success" ok
-      DetailPrint "$0" ;print error message to log
       ${LogLine} "$INSTDIR\install.log" "Error: $0"
       Goto skiplist
     ok:
     ; Print out list of files extracted to log
     next:
       Pop $0
-      DetailPrint $0
       ${LogLine} "$INSTDIR\install.log" "  $0"
     StrCmp $0 "" 0 next ; pop strings until a blank one arrives
 
@@ -239,14 +238,12 @@ Section "Deadline Cloud" deadline_cloud
     nsisunz::UnzipToStack "$INSTDIR\tmp\Python3.10.11.zip" "$INSTDIR"
     Pop $0
     StrCmp $0 "success" ok2
-      DetailPrint "$0" ;print error message to log
       ${LogLine} "$INSTDIR\install.log" "Error: $0"
       Goto skiplist2
     ok2:
     ; Print out list of files extracted to log
     next2:
       Pop $0
-      DetailPrint $0
       ${LogLine} "$INSTDIR\install.log" "  $0"
     StrCmp $0 "" 0 next2 ; pop strings until a blank one arrives
 
@@ -750,7 +747,7 @@ Section "Uninstall"
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "Starting uninstall"
     Call un.RemoveAll
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "Uninstall finished"
-    MessageBox MB_OK "Uninstall Finished"
+    ; MessageBox MB_OK "Uninstall Finished"
 
 SectionEnd
 
