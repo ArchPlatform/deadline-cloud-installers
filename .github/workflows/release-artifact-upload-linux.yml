@@ -19,6 +19,7 @@ jobs:
         id: get-latest-release
         run: |
           echo "deadline-cloud-releasetag=$(curl -s https://api.github.com/repos/Ahuge/deadline-cloud/releases/latest | jq '.tag_name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
+          echo "deadline-cloud-for-nuke-releasetag=$(curl -s https://api.github.com/repos/Ahuge/deadline-cloud-for-nuke/releases/latest | jq '.tag_name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
           echo "deadline-cloud-for-cinema-4d-releasetag=$(curl -s https://api.github.com/repos/Ahuge/deadline-cloud-for-cinema-4d/releases/latest | jq '.tag_name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
           echo "deadline-cloud-for-after-effects-releasetag=$(curl -s https://api.github.com/repos/Ahuge/deadline-cloud-for-after-effects/releases/latest | jq '.tag_name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
       - uses: actions/checkout@v4
@@ -28,6 +29,14 @@ jobs:
           path: "repositories/deadline-cloud"
           ref: ${{ steps.get-latest-release.outputs.deadline-cloud-releasetag }}
           # ref: release
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v4
+        name: Checkout-Deadline-Cloud-For-Nuke
+        with:
+          repository: "Ahuge/deadline-cloud-for-nuke"
+          path: "repositories/deadline-cloud-for-nuke"
+          ref: ${{ steps.get-latest-release.outputs.deadline-cloud-for-nuke-releasetag }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/checkout@v4
@@ -85,6 +94,19 @@ jobs:
           REF="$(cut -d'+' -f1 <<<'${{ steps.get-latest-release.outputs.deadline-cloud-releasetag }}')"
           cp dependency_bundle/deadline-deps.zip ${GITHUB_WORKSPACE}/artifacts/deadline-deps-${REF}-${PLATFORM}.zip
           echo "linux-deadline-dependency-path=${GITHUB_WORKSPACE}/artifacts/deadline-deps-${REF}-${PLATFORM}.zip" >> $GITHUB_OUTPUT
+
+      - name: Build Package Nuke
+        id: build-source-cinema-4d
+        env:
+          GITHUB_REF: "refs/tags/v0.0.1"
+        run: |
+          cd ${GITHUB_WORKSPACE}/repositories/deadline-cloud-for-nuke
+          hatch -v build
+          REF="$(cut -d'+' -f1 <<<'${{ steps.get-latest-release.outputs.deadline-cloud-for-nuke-releasetag }}' | sed s/^v//g)"
+          echo "REF: ${REF}"
+          cp ${GITHUB_WORKSPACE}/repositories/deadline-cloud-for-nuke/dist/deadline_cloud_for_nuke-${REF}-py3-none-any.whl ${GITHUB_WORKSPACE}/artifacts/deadline_cloud_for_nuke-${REF}-py3-none-any.whl
+          echo "linux-nuke-whl-path=${GITHUB_WORKSPACE}/artifacts/deadline_cloud_for_nuke-${REF}-py3-none-any.whl" >> $GITHUB_OUTPUT
+
       - name: Build Package Cinema 4D
         id: build-source-cinema-4d
         env:
@@ -125,6 +147,7 @@ jobs:
             ${{steps.build-source-deadline-cloud.outputs.linux-deadline-whl-path}}
             ${{steps.build-source-deadline-cloud.outputs.linux-deadline-tar-path}}
             ${{steps.build-deps.outputs.linux-deadline-dependency-path}}
+            ${{steps.build-source-nuke.outputs.linux-nuke-whl-path}}
             ${{steps.build-source-cinema-4d.outputs.linux-cinema-whl-path}}
             ${{steps.build-source-cinema-4d.outputs.linux-cinema-plugin-path}}
             ${{steps.build-source-after-effects.outputs.linux-after-effects-jsx-path}}
