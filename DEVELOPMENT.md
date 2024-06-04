@@ -10,3 +10,10 @@ Assuming you download the "Large Strings" build you should be able to run the fo
 ```
 & '<path-to-nsis-3.10-strlen_8192>\Bin\makensis.exe' .\setup.nsi
 ``` 
+
+## Local Development with Act
+[Act](https://github.com/nektos/Act) is a local GitHub actions runner that can be used to develop GithubActions locally.
+
+```
+C:\Users\ahugh\Desktop\act.exe -s GITHUB_TOKEN=xxx_xxxxxxx -W .\.github\workflows\release-artifact-upload-linux.yml -e .\release.event
+```
