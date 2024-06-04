@@ -452,8 +452,8 @@ LangString DESC_deadline_cloud_for_after_effects ${LANG_ENGLISH} "After Effects 
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${deadline_cloud} $(DESC_deadline_cloud)
-  !insertmacro MUI_DESCRIPTION_TEXT ${deadline_cloud_for_nuke} $(DESC_deadline_cloud_for_nuke)
   !insertmacro MUI_DESCRIPTION_TEXT ${deadline_cloud_for_maya} $(DESC_deadline_cloud_for_maya)
+  !insertmacro MUI_DESCRIPTION_TEXT ${deadline_cloud_for_nuke} $(DESC_deadline_cloud_for_nuke)
   !insertmacro MUI_DESCRIPTION_TEXT ${deadline_cloud_for_houdini} $(DESC_deadline_cloud_for_houdini)
   !insertmacro MUI_DESCRIPTION_TEXT ${deadline_cloud_for_keyshot} $(DESC_deadline_cloud_for_keyshot)
   !insertmacro MUI_DESCRIPTION_TEXT ${deadline_cloud_for_blender} $(DESC_deadline_cloud_for_blender)
@@ -472,8 +472,8 @@ Function .onInit
 
     !insertmacro SelectSection ${deadline_cloud}
     !insertmacro SetSectionFlag ${deadline_cloud} ${SF_RO}
-    !insertmacro UnselectSection ${deadline_cloud_for_nuke}
     !insertmacro UnselectSection ${deadline_cloud_for_maya}
+    !insertmacro UnselectSection ${deadline_cloud_for_nuke}
     !insertmacro UnselectSection ${deadline_cloud_for_houdini}
     !insertmacro UnselectSection ${deadline_cloud_for_keyshot}
     !insertmacro UnselectSection ${deadline_cloud_for_blender}
