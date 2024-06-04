@@ -114,9 +114,13 @@ Var InstallationOverviewMessageDeadlineForAfterEffects
 Var DidAfterEffectsPluginInstall
 Var AfterEffectsVersion
 
+Var ExitCode
+Var StdOutText
+
 ;--------------------------------
 ;Submitters Version Info
 !define DEADLINE_CLOUD_EXECUTABLE_NAME "deadline-cli-0.48.1.zip"
+!define DEADLINE_CLOUD_LIBRARY_NAME "deadline-0.48.1-py3-none-any.whl"
 !define CINEMA_4D_PLUGIN_NAME "DeadlineCloud-0.3.2.pyp"
 !define CINEMA_4D_LIBRARY_NAME "deadline_cloud_for_cinema_4d-0.3.2-py3-none-any.whl"
 !define AFTER_EFFECTS_PLUGIN_NAME "DeadlineCloudSubmitter-0.1.2.jsx"
@@ -206,6 +210,7 @@ Section "Deadline Cloud" deadline_cloud
     CreateDirectory "$INSTDIR\DeadlineClient"
 
     SetOutPath "$INSTDIR\tmp"
+    File ".\dist\${DEADLINE_CLOUD_LIBRARY_NAME}"
 
     ${LogLine} "$INSTDIR\install.log" "Extracting ${DEADLINE_CLOUD_EXECUTABLE_NAME}"
     File ".\dist\${DEADLINE_CLOUD_EXECUTABLE_NAME}"
@@ -249,6 +254,12 @@ Section "Deadline Cloud" deadline_cloud
 
     skiplist2:
 
+    ${LogLine} "$INSTDIR\install.log" "Installing pip"
+    nsExec::ExecToStack '"$INSTDIR\Python3.10.11\python.exe" "$INSTDIR\Python3.10.11\get-pip.py"'
+    Pop $ExitCode
+    Pop $StdOutText
+    ${LogLine} "$INSTDIR\install.log" "  $StdOutText"
+
 SectionEnd
 LangString DESC_deadline_cloud ${LANG_ENGLISH} "CLI for interfacing with Deadline."
 
@@ -270,9 +281,13 @@ Deadline Cloud for Maya 2024
 
     ; Install the deadline-cloud-for-maya libraries
     SetOutPath "$INSTDIR\tmp"
-    ${LogLine} "$INSTDIR\install.log" "Extracting ${MAYA_LIBRARY_NAME}"
+    ${LogLine} "$INSTDIR\install.log" "Installing ${MAYA_LIBRARY_NAME}, ${DEADLINE_CLOUD_LIBRARY_NAME} and dependencies"
     File ".\dist\${MAYA_LIBRARY_NAME}"
-    ExecWait '"$INSTDIR\Python3.10.11\python.exe" -m pip install $INSTDIR\tmp\${MAYA_LIBRARY_NAME} --target $INSTDIR\Submitters\Maya\scripts'
+    ; ExecWait '"$INSTDIR\Python3.10.11\python.exe" -m pip install $INSTDIR\tmp\${MAYA_LIBRARY_NAME} --target $INSTDIR\Submitters\Maya\scripts'
+    nsExec::ExecToStack '"$INSTDIR\Python3.10.11\Scripts\pip.exe" install "$INSTDIR\tmp\${DEADLINE_CLOUD_LIBRARY_NAME}" "$INSTDIR\tmp\${MAYA_LIBRARY_NAME}" --target "$INSTDIR\Submitters\Maya\scripts"'
+    Pop $ExitCode
+    Pop $StdOutText
+    ${LogLine} "$INSTDIR\install.log" "  $StdOutText"
     ; nsisunz::UnzipToStack "$INSTDIR\tmp\${MAYA_LIBRARY_NAME}" "$INSTDIR\Submitters\Maya\scripts"
     ; Pop $0
     ; StrCmp $0 "success" ok
@@ -384,11 +399,11 @@ Deadline Cloud for Cinema 4D S26
 
     ; Install the deadline-cloud-for-cinema-4d libraries
     SetOutPath "$INSTDIR\tmp"
-    ${LogLine} "$INSTDIR\install.log" "Installing ${CINEMA_4D_LIBRARY_NAME}"
+    ${LogLine} "$INSTDIR\install.log" "Installing ${CINEMA_4D_LIBRARY_NAME}, ${DEADLINE_CLOUD_LIBRARY_NAME} and dependencies"
     File ".\dist\${CINEMA_4D_LIBRARY_NAME}"
     ;Exec 'python.exe -m pip install "$INSTDIR\tmp\${CINEMA_4D_LIBRARY_NAME}" --target "$INSTDIR\Submitters\Cinema4D"'
     ${LogLine} "$INSTDIR\install.log" "Extracting ${CINEMA_4D_LIBRARY_NAME}"
-    ExecWait '"$INSTDIR\Python3.10.11\python.exe" -m pip install $INSTDIR\tmp\${CINEMA_4D_LIBRARY_NAME} --target $INSTDIR\Submitters\Cinema4D'
+    ExecWait '"$INSTDIR\Python3.10.11\Scripts\pip.exe" install "$INSTDIR\tmp\${DEADLINE_CLOUD_LIBRARY_NAME}" "$INSTDIR\tmp\${CINEMA_4D_LIBRARY_NAME}" --target "$INSTDIR\Submitters\Cinema4D"'
     ; nsisunz::UnzipToStack "$INSTDIR\tmp\${CINEMA_4D_LIBRARY_NAME}" "$INSTDIR\Submitters\Cinema4D"
     ; Pop $0
     ; StrCmp $0 "success" ok
