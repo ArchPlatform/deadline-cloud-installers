@@ -14,7 +14,7 @@ SUPPORTED_PYTHON_VERSIONS = ["3.7", "3.8", "3.9", "3.10", "3.11"]
 SUPPORTED_PLATFORMS = ["win_amd64", "manylinux2014_x86_64", "macosx_10_9_x86_64"]
 if os.environ.get("PYTHON_PLATFORM", None):
     SUPPORTED_PLATFORMS = [os.environ.get("PYTHON_PLATFORM")]
-NATIVE_DEPENDENCIES = ["xxhash"]
+NATIVE_DEPENDENCIES = ["xxhash", "PySide2"]
 
 
 def _get_project_dict() -> dict[str, Any]:
