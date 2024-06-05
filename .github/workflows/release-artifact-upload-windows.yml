@@ -86,6 +86,11 @@ jobs:
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-${REF}-py3-none-any.whl" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-${REF}.tar.gz" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
 
+          pip install "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-${REF}-py3-none-any.whl"
+          pip install -r requirements-installer.txt
+          python.exe scripts/pyinstaller/make_exe.py
+          Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-client-exe.zip" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline-cli-${REF}.zip"
+
           echo "windows-deadline-whl-path=$Env:GITHUB_WORKSPACE/artifacts/deadline-${REF}-py3-none-any.whl" >> $Env:GITHUB_OUTPUT
           echo "windows-deadline-tar-path=$Env:GITHUB_WORKSPACE/artifacts/deadline-${REF}.tar.gz" >> $Env:GITHUB_OUTPUT
       - name: Build depsBundle
