@@ -121,6 +121,7 @@ Var StdOutText
 ;Submitters Version Info
 !define DEADLINE_CLOUD_EXECUTABLE_NAME "deadline-cli-0.48.1.zip"
 !define DEADLINE_CLOUD_LIBRARY_NAME "deadline-0.48.1-py3-none-any.whl"
+!define DEADLINE_CLOUD_LIBRARY_DEPS "deadline-deps-0.48.1-windows.zip"
 !define CINEMA_4D_PLUGIN_NAME "DeadlineCloud-0.3.2.pyp"
 !define CINEMA_4D_LIBRARY_NAME "deadline_cloud_for_cinema_4d-0.3.2-py3-none-any.whl"
 !define AFTER_EFFECTS_PLUGIN_NAME "DeadlineCloudSubmitter-0.1.2.jsx"
@@ -211,6 +212,7 @@ Section "Deadline Cloud" deadline_cloud
 
     SetOutPath "$INSTDIR\tmp"
     File ".\dist\${DEADLINE_CLOUD_LIBRARY_NAME}"
+    File ".\dist\${DEADLINE_CLOUD_LIBRARY_DEPS}"
 
     ${LogLine} "$INSTDIR\install.log" "Extracting ${DEADLINE_CLOUD_EXECUTABLE_NAME}"
     File ".\dist\${DEADLINE_CLOUD_EXECUTABLE_NAME}"
@@ -237,29 +239,6 @@ Section "Deadline Cloud" deadline_cloud
     WriteRegStr HKCR "deadline\shell\open\command" "" '"$INSTDIR\DeadlineClient\deadline.exe" "handle-web-url" "%1"'
     ${LogLine} "$INSTDIR\install.log" "Finished installing DeadlineClient"
 
-    ${LogLine} "$INSTDIR\install.log" "Installing Python 3.10"
-    SetOutPath "$INSTDIR\tmp"
-    File ".\dist\Python3.10.11.zip"
-    nsisunz::UnzipToStack "$INSTDIR\tmp\Python3.10.11.zip" "$INSTDIR"
-    Pop $0
-    StrCmp $0 "success" ok2
-      ${LogLine} "$INSTDIR\install.log" "Error: $0"
-      Goto skiplist2
-    ok2:
-    ; Print out list of files extracted to log
-    next2:
-      Pop $0
-      ${LogLine} "$INSTDIR\install.log" "  $0"
-    StrCmp $0 "" 0 next2 ; pop strings until a blank one arrives
-
-    skiplist2:
-
-    ${LogLine} "$INSTDIR\install.log" "Installing pip"
-    nsExec::ExecToStack '"$INSTDIR\Python3.10.11\python.exe" "$INSTDIR\Python3.10.11\get-pip.py"'
-    Pop $ExitCode
-    Pop $StdOutText
-    ${LogLine} "$INSTDIR\install.log" "  $StdOutText"
-
 SectionEnd
 LangString DESC_deadline_cloud ${LANG_ENGLISH} "CLI for interfacing with Deadline."
 
@@ -283,26 +262,37 @@ Deadline Cloud for Maya 2024
     SetOutPath "$INSTDIR\tmp"
     ${LogLine} "$INSTDIR\install.log" "Installing ${MAYA_LIBRARY_NAME}, ${DEADLINE_CLOUD_LIBRARY_NAME} and dependencies"
     File ".\dist\${MAYA_LIBRARY_NAME}"
-    ; ExecWait '"$INSTDIR\Python3.10.11\python.exe" -m pip install $INSTDIR\tmp\${MAYA_LIBRARY_NAME} --target $INSTDIR\Submitters\Maya\scripts'
-    nsExec::ExecToStack '"$INSTDIR\Python3.10.11\Scripts\pip.exe" install "$INSTDIR\tmp\${DEADLINE_CLOUD_LIBRARY_NAME}" "$INSTDIR\tmp\${MAYA_LIBRARY_NAME}" --target "$INSTDIR\Submitters\Maya\scripts"'
-    Pop $ExitCode
-    Pop $StdOutText
-    ${LogLine} "$INSTDIR\install.log" "  $StdOutText"
-    ; nsisunz::UnzipToStack "$INSTDIR\tmp\${MAYA_LIBRARY_NAME}" "$INSTDIR\Submitters\Maya\scripts"
-    ; Pop $0
-    ; StrCmp $0 "success" ok
-    ;   DetailPrint "$0" ;print error message to log
-    ;   ${LogLine} "$INSTDIR\install.log" "Error: $0"
-    ;   Goto skiplist
-    ; ok:
-    ; ; Print out list of files extracted to log
-    ; next:
-    ;   Pop $0
-    ;   DetailPrint $0
-    ;   ${LogLine} "$INSTDIR\install.log" "  $0"
-    ; StrCmp $0 "" 0 next ; pop strings until a blank one arrives
-    ;
-    ; skiplist:
+    nsisunz::UnzipToStack "$INSTDIR\tmp\${MAYA_LIBRARY_NAME}" "$INSTDIR\Submitters\Maya\scripts"
+    Pop $0
+    StrCmp $0 "success" ok
+      DetailPrint "$0" ;print error message to log
+      ${LogLine} "$INSTDIR\install.log" "Error: $0"
+      Goto skiplist
+    ok:
+    ; Print out list of files extracted to log
+    next:
+      Pop $0
+      DetailPrint $0
+      ${LogLine} "$INSTDIR\install.log" "  $0"
+    StrCmp $0 "" 0 next ; pop strings until a blank one arrives
+
+    skiplist:
+
+    nsisunz::UnzipToStack "$INSTDIR\tmp\${DEADLINE_CLOUD_LIBRARY_DEPS}" "$INSTDIR\Submitters\Maya\scripts"
+    Pop $0
+    StrCmp $0 "success" ok2
+      DetailPrint "$0" ;print error message to log
+      ${LogLine} "$INSTDIR\install.log" "Error: $0"
+      Goto skiplist2
+    ok2:
+    ; Print out list of files extracted to log
+    next2:
+      Pop $0
+      DetailPrint $0
+      ${LogLine} "$INSTDIR\install.log" "  $0"
+    StrCmp $0 "" 0 next2 ; pop strings until a blank one arrives
+
+    skiplist2:
 
     ${LogLine} "$INSTDIR\install.log" "Moving bundled module files to $INSTDIR\Submitters\Maya"
     !insertmacro MoveFolder "$INSTDIR\Submitters\Maya\scripts\deadline\maya_submitter\maya_submitter_plugin\" "$INSTDIR\Submitters\Maya\" "*.*"
@@ -382,6 +372,7 @@ Deadline Cloud for Cinema 4D S26
 - Register the plug-in with Cinema 4D by creating or updating the g_additionalModulePath environment variable.
 - Install the deadline-cloud-for-cinema-4d libraries to the installation directory
 - Register the libraries with Deadline Cloud by creating or updating the CINEMA4D_DEADLINE_CLOUD_PYTHONPATH environment variable.
+# TODO: Install PySide2 dependency with this
 	*/
 	${LogLine} "$INSTDIR\install.log" "Starting installing Deadline Cloud Cinema 4D"
     SetShellVarContext all
@@ -402,23 +393,37 @@ Deadline Cloud for Cinema 4D S26
     ${LogLine} "$INSTDIR\install.log" "Installing ${CINEMA_4D_LIBRARY_NAME}, ${DEADLINE_CLOUD_LIBRARY_NAME} and dependencies"
     File ".\dist\${CINEMA_4D_LIBRARY_NAME}"
     ;Exec 'python.exe -m pip install "$INSTDIR\tmp\${CINEMA_4D_LIBRARY_NAME}" --target "$INSTDIR\Submitters\Cinema4D"'
-    ${LogLine} "$INSTDIR\install.log" "Extracting ${CINEMA_4D_LIBRARY_NAME}"
-    ExecWait '"$INSTDIR\Python3.10.11\Scripts\pip.exe" install "$INSTDIR\tmp\${DEADLINE_CLOUD_LIBRARY_NAME}" "$INSTDIR\tmp\${CINEMA_4D_LIBRARY_NAME}" --target "$INSTDIR\Submitters\Cinema4D"'
-    ; nsisunz::UnzipToStack "$INSTDIR\tmp\${CINEMA_4D_LIBRARY_NAME}" "$INSTDIR\Submitters\Cinema4D"
-    ; Pop $0
-    ; StrCmp $0 "success" ok
-    ;   DetailPrint "$0" ;print error message to log
-    ;   ${LogLine} "$INSTDIR\install.log" "Error: $0"
-    ;   Goto skiplist
-    ; ok:
-    ; ; Print out list of files extracted to log
-    ; next:
-    ;   Pop $0
-    ;   DetailPrint $0
-    ;   ${LogLine} "$INSTDIR\install.log" "  $0"
-    ; StrCmp $0 "" 0 next ; pop strings until a blank one arrives
-    ;
-    ; skiplist:
+    nsisunz::UnzipToStack "$INSTDIR\tmp\${CINEMA_4D_LIBRARY_NAME}" "$INSTDIR\Submitters\Cinema4D"
+    Pop $0
+    StrCmp $0 "success" ok
+      DetailPrint "$0" ;print error message to log
+      ${LogLine} "$INSTDIR\install.log" "Error: $0"
+      Goto skiplist
+    ok:
+    ; Print out list of files extracted to log
+    next:
+      Pop $0
+      DetailPrint $0
+      ${LogLine} "$INSTDIR\install.log" "  $0"
+    StrCmp $0 "" 0 next ; pop strings until a blank one arrives
+
+    skiplist:
+
+    nsisunz::UnzipToStack "$INSTDIR\tmp\${DEADLINE_CLOUD_LIBRARY_DEPS}" "$INSTDIR\Submitters\Cinema4D"
+    Pop $0
+    StrCmp $0 "success" ok2
+      DetailPrint "$0" ;print error message to log
+      ${LogLine} "$INSTDIR\install.log" "Error: $0"
+      Goto skiplist2
+    ok2:
+    ; Print out list of files extracted to log
+    next2:
+      Pop $0
+      DetailPrint $0
+      ${LogLine} "$INSTDIR\install.log" "  $0"
+    StrCmp $0 "" 0 next2 ; pop strings until a blank one arrives
+
+    skiplist2:
 
     ${LogLine} "$INSTDIR\install.log" "Adding CINEMA4D_DEADLINE_CLOUD_PYTHONPATH"
     EnVar::AddValue "CINEMA4D_DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
