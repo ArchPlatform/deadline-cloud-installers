@@ -15,10 +15,6 @@ jobs:
           # path: "repositories/deadline-cloud"
           ref: github-actions
           token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install build dependencies
-        id: build-dependencies-windows
-        run: |
-          winget install jqlang.jq
 
       - name: Deadline-Cloud-Latest-Release
         id: get-latest-release
