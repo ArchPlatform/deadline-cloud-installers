@@ -91,7 +91,7 @@ jobs:
       - name: Build depsBundle
         id: build-deps
         env:
-          PYTHON_PLATFORM: "manywindows2014_x86_64"
+          PYTHON_PLATFORM: "win_amd64"
           PLATFORM: "windows"
         run: |
           cd $Env:GITHUB_WORKSPACE/repositories/deadline-cloud
