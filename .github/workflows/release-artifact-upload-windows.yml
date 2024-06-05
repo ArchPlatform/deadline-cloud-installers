@@ -169,6 +169,7 @@ jobs:
         id: move-windows-installer
         run: |
           cd $Env:GITHUB_WORKSPACE
+          dir $Env:GITHUB_WORKSPACE
           Copy-Item -Path "deadline-cloud-submitters-x86-64-installer.exe" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline-cloud-submitters-x86-64-$($Env:GITHUB_REF.Split("/")[-1]).exe"
 
           $safeWorkspace = $Env:GITHUB_WORKSPACE -replace '\\','/'

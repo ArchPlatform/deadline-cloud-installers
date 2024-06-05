@@ -83,7 +83,7 @@ VIAddVersionKey "ProductName"     "${INFO_PRODUCTNAME}"
 ;--------------------------------
 ;General
 Name "${INFO_PRODUCTNAME}"
-OutFile "${INFO_PROJECTNAME}-v${INFO_PRODUCTVERSION}-${ARCH}-installer.exe"
+OutFile "${INFO_PROJECTNAME}-${ARCH}-installer.exe"
 
 Icon ".\resources\icon.ico"
 UninstallIcon ".\resources\icon.ico"
