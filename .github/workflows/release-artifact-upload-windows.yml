@@ -116,8 +116,8 @@ jobs:
         run: |
           cd $Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-nuke
           hatch -v build
-          REF="$(cut -d'+' -f1 <<<'${{ steps.get-latest-release.outputs.deadline-cloud-for-nuke-releasetag }}' | sed s/^v//g)"
-          echo "REF: ${REF}"
+          $REF='${{ steps.get-latest-release.outputs.deadline-cloud-for-nuke-releasetag }}'.Split("+")[0]
+          $REF = $REF.TrimStart("v")
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-nuke/dist/deadline_cloud_for_nuke-${REF}-py3-none-any.whl" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline_cloud_for_nuke-${REF}-py3-none-any.whl"
           echo "windows-nuke-whl-path=$Env:GITHUB_WORKSPACE/artifacts/deadline_cloud_for_nuke-${REF}-py3-none-any.whl" >> $Env:GITHUB_OUTPUT
 
@@ -126,8 +126,8 @@ jobs:
         run: |
           cd $Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d
           hatch -v build
-          REF="$(cut -d'+' -f1 <<<'${{ steps.get-latest-release.outputs.deadline-cloud-for-cinema-4d-releasetag }}' | sed s/^v//g)"
-          echo "REF: ${REF}"
+          $REF='${{ steps.get-latest-release.outputs.deadline-cloud-for-cinema-4d-releasetag }}'.Split("+")[0]
+          $REF = $REF.TrimStart("v")
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/deadline_cloud_for_cinema_4d-${REF}-py3-none-any.whl" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline_cloud_for_cinema_4d-${REF}-py3-none-any.whl"
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/deadline_cloud_extension/DeadlineCloud.pyp" -Destination "$Env:GITHUB_WORKSPACE/artifacts/DeadlineCloud-${REF}.pyp"
 
@@ -140,8 +140,8 @@ jobs:
           cd $Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-after-effects
           python jsxbundler.py --source src/deadline/ae_submitter/OpenAESubmitter.jsx --destination dist/jsxbundle/DeadlineCloudSubmitter.jsx
           hatch -v build
-          REF="$(cut -d'+' -f1 <<<'${{ steps.get-latest-release.outputs.deadline-cloud-for-after-effects-releasetag }}' | sed s/^v//g)"
-          echo "REF: ${REF}"
+          $REF='${{ steps.get-latest-release.outputs.deadline-cloud-for-after-effects-releasetag }}'.Split("+")[0]
+          $REF = $REF.TrimStart("v")
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-after-effects/dist/jsxbundle/DeadlineCloudSubmitter.jsx" -Destination "$Env:GITHUB_WORKSPACE/artifacts/DeadlineCloudSubmitter-${REF}.jsx"
 
           echo "windows-after-effects-jsx-path=$Env:GITHUB_WORKSPACE/artifacts/DeadlineCloudSubmitter-${REF}.jsx" >> $Env:GITHUB_OUTPUT
