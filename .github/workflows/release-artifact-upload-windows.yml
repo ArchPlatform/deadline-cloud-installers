@@ -173,10 +173,10 @@ jobs:
           cd $Env:GITHUB_WORKSPACE
           dir $Env:GITHUB_WORKSPACE
           Copy-Item -Path "deadline-cloud-submitters-x86-64-installer.exe" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline-cloud-submitters-x86-64-$($Env:GITHUB_REF.Split("/")[-1]).exe"
-
+          $REF = $Env:GITHUB_REF.Split("/")[-1].TrimStart("v")
           $safeWorkspace = $Env:GITHUB_WORKSPACE -replace '\\','/'
-          echo "windows-installer-name=deadline-cloud-submitters-x86-64-$($Env:GITHUB_REF.Split("/")[-1]).exe" >> $Env:GITHUB_OUTPUT
-          echo "windows-installer-path=$safeWorkspace/artifacts/deadline-cloud-submitters-x86-64-$($Env:GITHUB_REF.Split("/")[-1]).exe" >> $Env:GITHUB_OUTPUT
+          echo "windows-installer-name=deadline-cloud-submitters-${REF}-x86-64.exe" >> $Env:GITHUB_OUTPUT
+          echo "windows-installer-path=$safeWorkspace/artifacts/deadline-cloud-submitters-${REF}-x86-64.exe" >> $Env:GITHUB_OUTPUT
 
       - name: Upload Release Asset
         id: upload-release-asset-windows
