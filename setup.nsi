@@ -278,7 +278,7 @@ Deadline Cloud for Maya 2024
 
     skiplist:
 
-    nsisunz::UnzipToStack "$INSTDIR\tmp\${DEADLINE_CLOUD_LIBRARY_DEPS}" "$INSTDIR\Submitters\Maya\scripts"
+    nsisunz::UnzipToStack "$INSTDIR\tmp\${DEADLINE_CLOUD_LIBRARY_NAME}" "$INSTDIR\Submitters\Maya\scripts"
     Pop $0
     StrCmp $0 "success" ok2
       DetailPrint "$0" ;print error message to log
@@ -293,6 +293,22 @@ Deadline Cloud for Maya 2024
     StrCmp $0 "" 0 next2 ; pop strings until a blank one arrives
 
     skiplist2:
+
+    nsisunz::UnzipToStack "$INSTDIR\tmp\${DEADLINE_CLOUD_LIBRARY_DEPS}" "$INSTDIR\Submitters\Maya\scripts"
+    Pop $0
+    StrCmp $0 "success" ok3
+      DetailPrint "$0" ;print error message to log
+      ${LogLine} "$INSTDIR\install.log" "Error: $0"
+      Goto skiplist3
+    ok3:
+    ; Print out list of files extracted to log
+    next3:
+      Pop $0
+      DetailPrint $0
+      ${LogLine} "$INSTDIR\install.log" "  $0"
+    StrCmp $0 "" 0 next3 ; pop strings until a blank one arrives
+
+    skiplist3:
 
     ${LogLine} "$INSTDIR\install.log" "Moving bundled module files to $INSTDIR\Submitters\Maya"
     !insertmacro MoveFolder "$INSTDIR\Submitters\Maya\scripts\deadline\maya_submitter\maya_submitter_plugin\" "$INSTDIR\Submitters\Maya\" "*.*"
@@ -409,7 +425,7 @@ Deadline Cloud for Cinema 4D S26
 
     skiplist:
 
-    nsisunz::UnzipToStack "$INSTDIR\tmp\${DEADLINE_CLOUD_LIBRARY_DEPS}" "$INSTDIR\Submitters\Cinema4D"
+    nsisunz::UnzipToStack "$INSTDIR\tmp\${DEADLINE_CLOUD_LIBRARY_NAME}" "$INSTDIR\Submitters\Cinema4D"
     Pop $0
     StrCmp $0 "success" ok2
       DetailPrint "$0" ;print error message to log
@@ -424,6 +440,22 @@ Deadline Cloud for Cinema 4D S26
     StrCmp $0 "" 0 next2 ; pop strings until a blank one arrives
 
     skiplist2:
+
+    nsisunz::UnzipToStack "$INSTDIR\tmp\${DEADLINE_CLOUD_LIBRARY_DEPS}" "$INSTDIR\Submitters\Cinema4D"
+    Pop $0
+    StrCmp $0 "success" ok3
+      DetailPrint "$0" ;print error message to log
+      ${LogLine} "$INSTDIR\install.log" "Error: $0"
+      Goto skiplist3
+    ok3:
+    ; Print out list of files extracted to log
+    next3:
+      Pop $0
+      DetailPrint $0
+      ${LogLine} "$INSTDIR\install.log" "  $0"
+    StrCmp $0 "" 0 next3 ; pop strings until a blank one arrives
+
+    skiplist3:
 
     ${LogLine} "$INSTDIR\install.log" "Adding CINEMA4D_DEADLINE_CLOUD_PYTHONPATH"
     EnVar::AddValue "CINEMA4D_DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
