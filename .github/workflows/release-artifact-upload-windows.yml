@@ -19,7 +19,6 @@ jobs:
       - name: Deadline-Cloud-Latest-Release
         id: get-latest-release
         run: |
-          .Split("/")[-1]
           echo "deadline-cloud-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/Ahuge/deadline-cloud/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
           echo "deadline-cloud-for-maya-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/Ahuge/deadline-cloud-for-maya/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
           echo "deadline-cloud-for-nuke-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/Ahuge/deadline-cloud-for-nuke/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
