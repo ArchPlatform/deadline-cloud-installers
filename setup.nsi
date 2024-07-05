@@ -115,6 +115,8 @@ Var InstallationOverviewMessageDeadlineForCinema4D
 Var InstallationOverviewMessageDeadlineForAfterEffects
 Var DidAfterEffectsPluginInstall
 Var AfterEffectsVersion
+Var DidCinema4DPluginInstall
+Var Cinema4DVersion
 
 Var ExitCode
 Var StdOutText
@@ -552,7 +554,7 @@ FunctionEnd
 
 Function FindInstalledCinema4DVersion
     ${If} ${SectionIsSelected} ${deadline_cloud_for_cinema_4d}
-        ${ForEach} $Cinema4DVersion 2025 2023  - 1
+        ${ForEach} $Cinema4DVersion 2025 2023 - 1
             ${If} ${FileExists} "C:\Program Files\Maxon Cinema 4D $Cinema4DVersion"
                 ${LogLine} "$INSTDIR\install.log" "  Found Cinema 4D $Cinema4DVersion"
                 StrCpy $DefaultCinema4DInstallationDirectory "C:\Program Files\Maxon Cinema 4D $Cinema4DVersion"
