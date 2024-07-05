@@ -119,13 +119,15 @@ Var StdOutText
 
 ;--------------------------------
 ;Submitters Version Info
-!define DEADLINE_CLOUD_EXECUTABLE_NAME "deadline-cli-0.48.1.zip"
-!define DEADLINE_CLOUD_LIBRARY_NAME "deadline-0.48.1-py3-none-any.whl"
-!define DEADLINE_CLOUD_LIBRARY_DEPS "deadline-deps-0.48.1-windows.zip"
-!define CINEMA_4D_PLUGIN_NAME "DeadlineCloud-0.3.2.pyp"
-!define CINEMA_4D_LIBRARY_NAME "deadline_cloud_for_cinema_4d-0.3.2-py3-none-any.whl"
-!define AFTER_EFFECTS_PLUGIN_NAME "DeadlineCloudSubmitter-0.1.2.jsx"
-!define MAYA_LIBRARY_NAME "deadline_cloud_for_maya-0.14.1-py3-none-any.whl"
+!define DEADLINE_CLOUD_EXECUTABLE_NAME "deadline-cli-0.0.0.zip"
+!define DEADLINE_CLOUD_LIBRARY_NAME "deadline-0.0.0-py3-none-any.whl"
+!define DEADLINE_CLOUD_LIBRARY_DEPS "deadline-deps-0.0.0-windows.zip"
+!define CINEMA_4D_PLUGIN_NAME "DeadlineCloud-0.0.0.pyp"
+!define CINEMA_4D_LIBRARY_NAME "deadline_cloud_for_cinema_4d-0.0.0-py3-none-any.whl"
+!define AFTER_EFFECTS_PLUGIN_NAME "DeadlineCloudSubmitter-0.0.0.jsx"
+!define MAYA_LIBRARY_NAME "deadline_cloud_for_maya-0.0.0-py3-none-any.whl"
+!define PYSIDE_LIBRARY_NAME "PySide6_Essentials-0.0.0-cp39-abi3-win_amd64.whl"
+!define SHIBOKEN_LIBRARY_NAME "shiboken6-0.0.0-cp39-abi3-win_amd64.whl"
 
 ;--------------------------------
 ; General Image settings
