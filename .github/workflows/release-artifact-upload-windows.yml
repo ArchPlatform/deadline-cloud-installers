@@ -92,7 +92,7 @@ jobs:
           pip install -r requirements-installer.txt
           python.exe scripts/pyinstaller/make_exe.py
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-client-exe.zip" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline-cli-${REF}.zip"
-
+# 0.48.7
           echo "windows-deadline-whl-path=$Env:GITHUB_WORKSPACE/artifacts/deadline-${REF}-py3-none-any.whl" >> $Env:GITHUB_OUTPUT
           echo "windows-deadline-tar-path=$Env:GITHUB_WORKSPACE/artifacts/deadline-${REF}.tar.gz" >> $Env:GITHUB_OUTPUT
       - name: Build depsBundle
@@ -176,7 +176,7 @@ jobs:
           echo "Updating DEADLINE_CLOUD_EXECUTABLE_NAME..."
           (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define DEADLINE_CLOUD_EXECUTABLE_NAME "deadline-cli-0.0.0.zip"', "!define DEADLINE_CLOUD_EXECUTABLE_NAME `"deadline-cli-${DEADLINE_CLOUD_REF}.zip`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
           echo "Updating DEADLINE_CLOUD_LIBRARY_NAME..."
-          (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define DEADLINE_CLOUD_LIBRARY_NAME "deadline-0.0.0-py3-none-any.whl"', "!define DEADLINE_CLOUD_LIBRARY_NAME `"deadline-cli-${DEADLINE_CLOUD_REF}-py3-none-any.whl`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
+          (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define DEADLINE_CLOUD_LIBRARY_NAME "deadline-0.0.0-py3-none-any.whl"', "!define DEADLINE_CLOUD_LIBRARY_NAME `"deadline-${DEADLINE_CLOUD_REF}-py3-none-any.whl`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
           echo "Updating DEADLINE_CLOUD_LIBRARY_DEPS..."
           (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define DEADLINE_CLOUD_LIBRARY_DEPS "deadline-deps-0.0.0-windows.zip"', "!define DEADLINE_CLOUD_LIBRARY_DEPS `"deadline-deps-${DEADLINE_CLOUD_REF}-windows.zip`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
 
