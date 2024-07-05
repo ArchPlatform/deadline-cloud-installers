@@ -461,6 +461,9 @@ Deadline Cloud for Cinema 4D S26
 
     skiplist3:
 
+    ${LogLine} "$INSTDIR\install.log" "Installing PySide6-Essentials to $DefaultCinema4DInstallationDirectory"
+    ${Locate} "$DefaultCinema4DInstallationDirectory\resource\modules\python\libs\*win64*" "/L=F /M python.exe" "InstallPySide"
+
     ${LogLine} "$INSTDIR\install.log" "Adding CINEMA4D_DEADLINE_CLOUD_PYTHONPATH"
     EnVar::AddValue "CINEMA4D_DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
     ${LogLine} "$INSTDIR\install.log" "Finished installing Deadline Cloud Cinema 4D"
@@ -625,6 +628,17 @@ Function CheckInstalledAfterEffectsVersion
             Abort "Install failed. Deadline Cloud for After Effects could not find an installed After Effects installation.$\r$\nDeadline Cloud for After Effects will be unchecked"
         ${EndIf}
     ${EndIf}
+FunctionEnd
+
+Function InstallPySide
+	Exec '$R0 -m ensurepip'
+	File ".\dist\${PYSIDE_LIBRARY_NAME}"
+	File ".\dist\${SHIBOKEN_LIBRARY_NAME}"
+	Exec '$R0 -m pip install--no-index --find-links="$INSTDIR\tmp" ${PYSIDE_LIBRARY_NAME} ${SHIBOKEN_LIBRARY_NAME}'
+	MessageBox MB_YESNO '$R0$\n$\nFind next?' IDYES +2
+	StrCpy $0 StopLocate
+
+	Push $0
 FunctionEnd
 
 Function CreateUnrealEnginePluginPage
