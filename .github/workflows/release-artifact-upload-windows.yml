@@ -139,6 +139,17 @@ jobs:
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/deadline_cloud_for_cinema_4d-${REF}-py3-none-any.whl" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline_cloud_for_cinema_4d-${REF}-py3-none-any.whl"
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/deadline_cloud_extension/DeadlineCloud.pyp" -Destination "$Env:GITHUB_WORKSPACE/artifacts/DeadlineCloud-${REF}.pyp"
 
+          # Download PySide6-Essentials for C4D to use
+          python -m pip download --dest "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/PySide" --only-binary=:all: PySide6-Essentials
+          Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/PySide/*.whl" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
+          
+          Get-ChildItem "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/PySide" -Recurse  -Include "PySide6_Essentials-*win_amd64.whl" | Foreach-Object {
+            Copy-Item -Path "$_.FullName" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
+          }
+          Get-ChildItem "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/PySide" -Recurse  -Include "shiboken6-*win_amd64.whl" | Foreach-Object {
+            Copy-Item -Path "$_.FullName" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
+          }
+
           echo "windows-cinema-whl-path=$Env:GITHUB_WORKSPACE/artifacts/deadline_cloud_for_cinema_4d-${REF}-py3-none-any.whl" >> $Env:GITHUB_OUTPUT
           echo "windows-cinema-plugin-path=$Env:GITHUB_WORKSPACE/artifacts/DeadlineCloud-${REF}.pyp" >> $Env:GITHUB_OUTPUT
 
