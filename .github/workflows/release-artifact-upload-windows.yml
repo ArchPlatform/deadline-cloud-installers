@@ -144,10 +144,10 @@ jobs:
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/PySide/*.whl" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
           
           Get-ChildItem "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/PySide" -Recurse  -Include "PySide6_Essentials-*win_amd64.whl" | Foreach-Object {
-            Copy-Item -Path "$_.FullName" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
+            Copy-Item -Path "$_" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
           }
           Get-ChildItem "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/PySide" -Recurse  -Include "shiboken6-*win_amd64.whl" | Foreach-Object {
-            Copy-Item -Path "$_.FullName" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
+            Copy-Item -Path "$_" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
           }
 
           echo "windows-cinema-whl-path=$Env:GITHUB_WORKSPACE/artifacts/deadline_cloud_for_cinema_4d-${REF}-py3-none-any.whl" >> $Env:GITHUB_OUTPUT
@@ -188,11 +188,11 @@ jobs:
           (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define MAYA_LIBRARY_NAME "deadline_cloud_for_maya-0.0.0-py3-none-any.whl"', "!define MAYA_LIBRARY_NAME `"deadline_cloud_for_maya-${MAYA_REF}-py3-none-any.whl`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
 
           Get-ChildItem "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/PySide" -Recurse  -Include "PySide6_Essentials-*win_amd64.whl" | Foreach-Object {
-            $PYSIDE_LIBRARY_NAME="$_.Name"
+            $PYSIDE_LIBRARY_NAME = $_.Name
             (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define PYSIDE_LIBRARY_NAME "PySide6_Essentials-0.0.0-cp39-abi3-win_amd64.whl"', "!define PYSIDE_LIBRARY_NAME `"${PYSIDE_LIBRARY_NAME}`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
           }
           Get-ChildItem "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/PySide" -Recurse  -Include "shiboken6-*win_amd64.whl" | Foreach-Object {
-            $SHIBOKEN_LIBRARY_NAME="$_.Name"
+            $SHIBOKEN_LIBRARY_NAME = $_.Name
             echo "
             (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define SHIBOKEN_LIBRARY_NAME "shiboken6-0.0.0-cp39-abi3-win_amd64.whl"', "!define SHIBOKEN_LIBRARY_NAME `"${SHIBOKEN_LIBRARY_NAME}`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
           }
