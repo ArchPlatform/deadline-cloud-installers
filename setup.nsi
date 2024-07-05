@@ -100,6 +100,8 @@ RequestExecutionLevel "${REQUEST_EXECUTION_LEVEL}"
 ;Variables that we may need later in the script
 Var DefaultUnrealPluginDirectoryTextBox
 Var DefaultUnrealPluginDirectory
+Var DefaultCinema4DInstallationDirectoryTextBox
+Var DefaultCinema4DInstallationDirectory
 Var InstallationOverviewListBox
 Var InstallationOverviewMessage
 Var InstallationOverviewMessageDeadlineClient
@@ -176,6 +178,7 @@ Var StdOutText
 !insertmacro MUI_PAGE_COMPONENTS
 Page Custom CheckInstalledAfterEffectsVersion
 Page Custom CreateUnrealEnginePluginPage LeaveUnrealEnginePluginPage
+Page Custom CreateCinema4DInstallationPage LeaveCinema4DInstallationPage
 Page Custom CreateInstallationOverview LeaveInstallationOverview
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
@@ -410,7 +413,6 @@ Deadline Cloud for Cinema 4D S26
     SetOutPath "$INSTDIR\tmp"
     ${LogLine} "$INSTDIR\install.log" "Installing ${CINEMA_4D_LIBRARY_NAME}, ${DEADLINE_CLOUD_LIBRARY_NAME} and dependencies"
     File ".\dist\${CINEMA_4D_LIBRARY_NAME}"
-    ;Exec 'python.exe -m pip install "$INSTDIR\tmp\${CINEMA_4D_LIBRARY_NAME}" --target "$INSTDIR\Submitters\Cinema4D"'
     nsisunz::UnzipToStack "$INSTDIR\tmp\${CINEMA_4D_LIBRARY_NAME}" "$INSTDIR\Submitters\Cinema4D"
     Pop $0
     StrCmp $0 "success" ok
@@ -521,6 +523,7 @@ Function .onInit
     !insertmacro UnselectSection ${deadline_cloud_for_after_effects}
 
     StrCpy $DefaultUnrealPluginDirectory "C:\Program Files\Epic Games\UE_5.2\Engine\Plugins\UnrealDeadlineCloudService"
+    Call FindInstalledCinema4DVersion
 
     StrCpy $InstallationOverviewMessageDeadlineClient "Deadline Client$\r$\n- Installs the Deadline Client CLI application to the installation directory$\r$\n- Updates the PATH environment variable to include the path to the Deadline Client CLI$\r$\n- Installs the Deadline protocol handler to handle the deadline:// URI scheme (e.g. for downloading job output)$\r$\n- Configures the Deadline Client as specified in the installer"
     StrCpy $InstallationOverviewMessageDeadlineForNuke "Deadline Cloud for Nuke 14.0-15.0$\r$\n- Compatible with Nuke 14.0-15.0$\r$\n- Install the integrated Nuke submitter files to the installation directory$\r$\n- Register the plug-in with Nuke by creating or updating the NUKE_PATH environment variable."
@@ -543,6 +546,68 @@ FunctionEnd
 ;    NoCancelAbort:
 ;        Call RemoveAll
 ;FunctionEnd
+
+Function FindInstalledCinema4DVersion
+    ${If} ${SectionIsSelected} ${deadline_cloud_for_cinema_4d}
+        ${ForEach} $Cinema4DVersion 2025 2023  - 1
+            ${If} ${FileExists} "C:\Program Files\Maxon Cinema 4D $Cinema4DVersion"
+                ${LogLine} "$INSTDIR\install.log" "  Found Cinema 4D $Cinema4DVersion"
+                StrCpy $DefaultCinema4DInstallationDirectory "C:\Program Files\Maxon Cinema 4D $Cinema4DVersion"
+                StrCpy $DidCinema4DPluginInstall "1"
+            ${EndIf}
+        ${Next}
+
+        ${LogLine} "$INSTDIR\install.log" "Did we find a version of Cinema 4D Installed? $DidCinema4DPluginInstall"
+        ${If} $DidCinema4DPluginInstall != "1"
+            StrCpy $DefaultCinema4DInstallationDirectory "C:\Program Files\Maxon Cinema 4D R26"
+        ${EndIf}
+    ${EndIf}
+FunctionEnd
+
+Function CreateCinema4DInstallationPage
+    ${IfNot} ${SectionIsSelected} ${deadline_cloud_for_cinema_4d}
+        Abort
+    ${EndIf}
+    !insertmacro MUI_HEADER_TEXT "Arch Platform Technologies" "Path to the Maxon Cinema 4D installation directory"
+    nsDialogs::Create 1018
+    Pop $0
+    ${NSD_CreateLabel} 0 0 100% 18u "Maxon Cinema 4D installation directory"
+    Pop $0
+
+    ${NSD_CreateGroupBox} 2% 20u 90% 34u "Path to the Maxon Cinema 4D installation directory"
+    Pop $0
+
+        ${NSD_CreateDirRequest} 8% 34u 63% 12u "$DefaultCinema4DInstallationDirectory"
+        Pop $DefaultCinema4DInstallationDirectoryTextBox
+
+        ${NSD_CreateBrowseButton} 72% 34u 15% 12u "Browse..."
+        Pop $0
+        ${NSD_OnClick} $0 OnCinema4DInstallationBrowse
+
+    nsDialogs::Show
+
+FunctionEnd
+
+Function OnCinema4DInstallationBrowse
+    ${NSD_GetText} $DefaultCinema4DInstallationDirectoryTextBox $0
+    nsDialogs::SelectFolderDialog "Select Cinema 4D Installation Directory" "$0"
+    Pop $0
+    ${If} $0 != error
+        ${NSD_SetText} $DefaultCinema4DInstallationDirectoryTextBox "$0"
+    ${EndIf}
+FunctionEnd
+
+Function LeaveCinema4DInstallationPage
+    ${NSD_GetText} $DefaultCinema4DInstallationDirectoryTextBox $DefaultCinema4DInstallationDirectory
+    ${If} ${FileExists} $DefaultCinema4DInstallationDirectory
+      ; file is a directory
+    ${Else}
+      MessageBox MB_OK "The directory $DefaultCinema4DInstallationDirectory does not exist"
+      Abort
+      ; file is neither a file or a directory (i.e. it doesn't exist)
+    ${EndIf}
+FunctionEnd
+
 
 Function CheckInstalledAfterEffectsVersion
     ${If} ${SectionIsSelected} ${deadline_cloud_for_after_effects}
