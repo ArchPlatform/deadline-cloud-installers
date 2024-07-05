@@ -173,27 +173,35 @@ jobs:
           (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace 'dist', "artifacts" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
           
           $DEADLINE_CLOUD_REF='${{ steps.get-latest-release.outputs.deadline-cloud-releasetag }}'.Split("+")[0].TrimStart("v")
+          echo "Updating DEADLINE_CLOUD_EXECUTABLE_NAME..."
           (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define DEADLINE_CLOUD_EXECUTABLE_NAME "deadline-cli-0.0.0.zip"', "!define DEADLINE_CLOUD_EXECUTABLE_NAME `"deadline-cli-${DEADLINE_CLOUD_REF}.zip`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
+          echo "Updating DEADLINE_CLOUD_LIBRARY_NAME..."
           (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define DEADLINE_CLOUD_LIBRARY_NAME "deadline-0.0.0-py3-none-any.whl"', "!define DEADLINE_CLOUD_LIBRARY_NAME `"deadline-cli-${DEADLINE_CLOUD_REF}-py3-none-any.whl`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
+          echo "Updating DEADLINE_CLOUD_LIBRARY_DEPS..."
           (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define DEADLINE_CLOUD_LIBRARY_DEPS "deadline-deps-0.0.0-windows.zip"', "!define DEADLINE_CLOUD_LIBRARY_DEPS `"deadline-deps-${DEADLINE_CLOUD_REF}-windows.zip`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
 
           $CINEMA_4D_REF='${{ steps.get-latest-release.outputs.deadline-cloud-for-cinema-4d-releasetag }}'.Split("+")[0].TrimStart("v")
+          echo "Updating CINEMA_4D_PLUGIN_NAME..."
           (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define CINEMA_4D_PLUGIN_NAME "DeadlineCloud-0.0.0.pyp"', "!define CINEMA_4D_PLUGIN_NAME `"DeadlineCloud-${CINEMA_4D_REF}.pyp`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
+          echo "Updating CINEMA_4D_LIBRARY_NAME..."
           (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define CINEMA_4D_LIBRARY_NAME "deadline_cloud_for_cinema_4d-0.0.0-py3-none-any.whl"', "!define CINEMA_4D_LIBRARY_NAME `"deadline_cloud_for_cinema_4d-${CINEMA_4D_REF}-py3-none-any.whl`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
 
           $AFTER_EFFECTS_REF='${{ steps.get-latest-release.outputs.deadline-cloud-for-after-effects-releasetag }}'.Split("+")[0].TrimStart("v")
+          echo "Updating AFTER_EFFECTS_PLUGIN_NAME..."
           (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define AFTER_EFFECTS_PLUGIN_NAME "DeadlineCloudSubmitter-0.0.0.jsx"', "!define AFTER_EFFECTS_PLUGIN_NAME `"DeadlineCloudSubmitter-${AFTER_EFFECTS_REF}.jsx`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
 
           $MAYA_REF='${{ steps.get-latest-release.outputs.deadline-cloud-for-maya-releasetag }}'.Split("+")[0].TrimStart("v")
+          echo "Updating MAYA_LIBRARY_NAME..."
           (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define MAYA_LIBRARY_NAME "deadline_cloud_for_maya-0.0.0-py3-none-any.whl"', "!define MAYA_LIBRARY_NAME `"deadline_cloud_for_maya-${MAYA_REF}-py3-none-any.whl`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
 
           Get-ChildItem "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/PySide" -Recurse  -Include "PySide6_Essentials-*win_amd64.whl" | Foreach-Object {
             $PYSIDE_LIBRARY_NAME = $_.Name
+            echo "Updating PYSIDE_LIBRARY_NAME..."
             (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define PYSIDE_LIBRARY_NAME "PySide6_Essentials-0.0.0-cp39-abi3-win_amd64.whl"', "!define PYSIDE_LIBRARY_NAME `"${PYSIDE_LIBRARY_NAME}`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
           }
           Get-ChildItem "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/PySide" -Recurse  -Include "shiboken6-*win_amd64.whl" | Foreach-Object {
             $SHIBOKEN_LIBRARY_NAME = $_.Name
-            echo "
+            echo "Updating SHIBOKEN_LIBRARY_NAME..."
             (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define SHIBOKEN_LIBRARY_NAME "shiboken6-0.0.0-cp39-abi3-win_amd64.whl"', "!define SHIBOKEN_LIBRARY_NAME `"${SHIBOKEN_LIBRARY_NAME}`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
           }
 
