@@ -527,10 +527,15 @@ Function .onInit
     !insertmacro SetSectionFlag ${deadline_cloud} ${SF_RO}
     !insertmacro UnselectSection ${deadline_cloud_for_maya}
     !insertmacro UnselectSection ${deadline_cloud_for_nuke}
+    !insertmacro SetSectionFlag ${deadline_cloud_for_nuke} ${SF_RO}
     !insertmacro UnselectSection ${deadline_cloud_for_houdini}
+    !insertmacro SetSectionFlag ${deadline_cloud_for_houdini} ${SF_RO}
     !insertmacro UnselectSection ${deadline_cloud_for_keyshot}
+    !insertmacro SetSectionFlag ${deadline_cloud_for_keyshot} ${SF_RO}
     !insertmacro UnselectSection ${deadline_cloud_for_blender}
+    !insertmacro SetSectionFlag ${deadline_cloud_for_blender} ${SF_RO}
     !insertmacro UnselectSection ${deadline_cloud_for_unreal_engine}
+    !insertmacro SetSectionFlag ${deadline_cloud_for_unreal_engine} ${SF_RO}
     !insertmacro UnselectSection ${deadline_cloud_for_cinema_4d}
     !insertmacro UnselectSection ${deadline_cloud_for_after_effects}
 
