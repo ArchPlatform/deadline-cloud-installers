@@ -565,19 +565,18 @@ FunctionEnd
 ;FunctionEnd
 
 Function FindInstalledCinema4DVersion
-    ${If} ${SectionIsSelected} ${deadline_cloud_for_cinema_4d}
-        ${ForEach} $Cinema4DVersion 2025 2023 - 1
-            ${If} ${FileExists} "C:\Program Files\Maxon Cinema 4D $Cinema4DVersion"
-                ${LogLine} "$INSTDIR\install.log" "  Found Cinema 4D $Cinema4DVersion"
-                StrCpy $DefaultCinema4DInstallationDirectory "C:\Program Files\Maxon Cinema 4D $Cinema4DVersion"
-                StrCpy $DidCinema4DPluginInstall "1"
-            ${EndIf}
-        ${Next}
-
-        ${LogLine} "$INSTDIR\install.log" "Did we find a version of Cinema 4D Installed? $DidCinema4DPluginInstall"
-        ${If} $DidCinema4DPluginInstall != "1"
-            StrCpy $DefaultCinema4DInstallationDirectory "C:\Program Files\Maxon Cinema 4D R26"
+    ${LogLine} "$INSTDIR\install.log" "Looking for Cinema 4D versions installed"
+    ${ForEach} $Cinema4DVersion 2025 2023 - 1
+        ${If} ${FileExists} "C:\Program Files\Maxon Cinema 4D $Cinema4DVersion"
+            ${LogLine} "$INSTDIR\install.log" "  Found Cinema 4D $Cinema4DVersion"
+            StrCpy $DefaultCinema4DInstallationDirectory "C:\Program Files\Maxon Cinema 4D $Cinema4DVersion"
+            StrCpy $DidCinema4DPluginInstall "1"
         ${EndIf}
+    ${Next}
+
+    ${LogLine} "$INSTDIR\install.log" "Did we find a version of Cinema 4D Installed? $DidCinema4DPluginInstall"
+    ${If} $DidCinema4DPluginInstall != "1"
+        StrCpy $DefaultCinema4DInstallationDirectory "C:\Program Files\Maxon Cinema 4D R26"
     ${EndIf}
 FunctionEnd
 
