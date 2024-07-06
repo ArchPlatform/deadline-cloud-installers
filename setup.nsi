@@ -117,6 +117,7 @@ Var DidAfterEffectsPluginInstall
 Var AfterEffectsVersion
 Var DidCinema4DPluginInstall
 Var Cinema4DVersion
+Var Cinema4DPythonExe
 
 Var ExitCode
 Var StdOutText
@@ -468,10 +469,23 @@ Deadline Cloud for Cinema 4D S26
 
     skiplist3:
 
-    ${LogLine} "$INSTDIR\install.log" "Installing PySide6-Essentials to $DefaultCinema4DInstallationDirectory"
-    ${Locate} "$DefaultCinema4DInstallationDirectory\resource\modules\python\libs\*win64*" "/L=F /M python.exe" "InstallPySide"
-    ${LogLine} "$INSTDIR\install.log" "Installing PySide6-Essentials to $DefaultCinema4DInstallationDirectory  2"
-    ${Locate} "$DefaultCinema4DInstallationDirectory\resource\modules\python\libs\*in6*" "/L=F /M python.exe" "InstallPySide"
+
+    ${LogLine} "$INSTDIR\install.log" "About to find files"
+    FindFirst $0 $1 "$DefaultCinema4DInstallationDirectory\resource\modules\python\libs\*win64*"
+    loop:
+        StrCmp $1 "" end ; No more files?
+        StrCmp $1 "." next ; DOS special name
+        StrCmp $1 ".." next ; DOS special name
+        ${LogLine} "$INSTDIR\install.log" "  Found $1"
+        ${LogLine} "$INSTDIR\install.log" "  Does $DefaultCinema4DInstallationDirectory\resource\modules\python\libs\$1\python.exe exist?"
+        ${If} ${FileExists} "$DefaultCinema4DInstallationDirectory\resource\modules\python\libs\$1\python.exe"
+            StrCpy $Cinema4DPythonExe "$DefaultCinema4DInstallationDirectory\resource\modules\python\libs\$1\python.exe"
+            Call InstallPySide
+        ${EndIf}
+        Goto end ; This stops the search at the first folder it finds
+    end:
+    FindClose $0
+    ${LogLine} "$INSTDIR\install.log" "Done to find files"
 
     ${LogLine} "$INSTDIR\install.log" "Adding DEADLINE_CLOUD_PYTHONPATH"
     EnVar::AddValue "DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
@@ -646,21 +660,21 @@ Function CheckInstalledAfterEffectsVersion
 FunctionEnd
 
 Function InstallPySide
-    ${LogLine} "$INSTDIR\install.log" "$R0 -m ensurepip"
-    nsExec::ExecToStack '$R0 -m ensurepip'
+    ${LogLine} "$INSTDIR\install.log" "$Cinema4DPythonExe -m ensurepip"
+    nsExec::ExecToStack '$Cinema4DPythonExe -m ensurepip'
     Pop $ExitCode
     Pop $StdOutText
     ${LogLine} "$INSTDIR\install.log" "  $StdOutText"
 
-	; Exec '$R0 -m ensurepip'
+	; Exec '$Cinema4DPythonExe -m ensurepip'
 	File ".\dist\${PYSIDE_LIBRARY_NAME}"
 	File ".\dist\${SHIBOKEN_LIBRARY_NAME}"
-	${LogLine} "$INSTDIR\install.log" "$R0 -m pip install--no-index --find-links=$INSTDIR\tmp ${PYSIDE_LIBRARY_NAME} ${SHIBOKEN_LIBRARY_NAME}"
-    nsExec::ExecToStack '$R0 -m pip install--no-index --find-links="$INSTDIR\tmp" ${PYSIDE_LIBRARY_NAME} ${SHIBOKEN_LIBRARY_NAME}'
+	${LogLine} "$INSTDIR\install.log" "$Cinema4DPythonExe -m pip install --no-index --find-links=$INSTDIR\tmp ${PYSIDE_LIBRARY_NAME} ${SHIBOKEN_LIBRARY_NAME}"
+    nsExec::ExecToStack '$Cinema4DPythonExe -m pip install --no-index --find-links="$INSTDIR\tmp" ${PYSIDE_LIBRARY_NAME} ${SHIBOKEN_LIBRARY_NAME}'
     Pop $ExitCode
     Pop $StdOutText
     ${LogLine} "$INSTDIR\install.log" "  $StdOutText"
-	;Exec '$R0 -m pip install--no-index --find-links="$INSTDIR\tmp" ${PYSIDE_LIBRARY_NAME} ${SHIBOKEN_LIBRARY_NAME}'
+	;Exec '$Cinema4DPythonExe -m pip install --no-index --find-links="$INSTDIR\tmp" ${PYSIDE_LIBRARY_NAME} ${SHIBOKEN_LIBRARY_NAME}'
 	StrCpy $0 StopLocate
 	Push $0
 FunctionEnd
