@@ -470,6 +470,8 @@ Deadline Cloud for Cinema 4D S26
 
     ${LogLine} "$INSTDIR\install.log" "Installing PySide6-Essentials to $DefaultCinema4DInstallationDirectory"
     ${Locate} "$DefaultCinema4DInstallationDirectory\resource\modules\python\libs\*win64*" "/L=F /M python.exe" "InstallPySide"
+    ${LogLine} "$INSTDIR\install.log" "Installing PySide6-Essentials to $DefaultCinema4DInstallationDirectory  2"
+    ${Locate} "$DefaultCinema4DInstallationDirectory\resource\modules\python\libs\*in6*" "/L=F /M python.exe" "InstallPySide"
 
     ${LogLine} "$INSTDIR\install.log" "Adding DEADLINE_CLOUD_PYTHONPATH"
     EnVar::AddValue "DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
