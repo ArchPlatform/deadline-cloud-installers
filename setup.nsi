@@ -398,7 +398,7 @@ Deadline Cloud for Cinema 4D S26
 - Install DeadlineCloud.pyp plug-in to the installation directory.
 - Register the plug-in with Cinema 4D by creating or updating the g_additionalModulePath environment variable.
 - Install the deadline-cloud-for-cinema-4d libraries to the installation directory
-- Register the libraries with Deadline Cloud by creating or updating the CINEMA4D_DEADLINE_CLOUD_PYTHONPATH environment variable.
+- Register the libraries with Deadline Cloud by creating or updating the DEADLINE_CLOUD_PYTHONPATH environment variable.
 # TODO: Install PySide2 dependency with this
 	*/
 	${LogLine} "$INSTDIR\install.log" "-------------------------------------------------"
@@ -471,8 +471,8 @@ Deadline Cloud for Cinema 4D S26
     ${LogLine} "$INSTDIR\install.log" "Installing PySide6-Essentials to $DefaultCinema4DInstallationDirectory"
     ${Locate} "$DefaultCinema4DInstallationDirectory\resource\modules\python\libs\*win64*" "/L=F /M python.exe" "InstallPySide"
 
-    ${LogLine} "$INSTDIR\install.log" "Adding CINEMA4D_DEADLINE_CLOUD_PYTHONPATH"
-    EnVar::AddValue "CINEMA4D_DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
+    ${LogLine} "$INSTDIR\install.log" "Adding DEADLINE_CLOUD_PYTHONPATH"
+    EnVar::AddValue "DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
     ${LogLine} "$INSTDIR\install.log" "Finished installing Deadline Cloud Cinema 4D"
     ${LogLine} "$INSTDIR\install.log" "-------------------------------------------------"
 SectionEnd
@@ -549,7 +549,7 @@ Function .onInit
     StrCpy $InstallationOverviewMessageDeadlineForKeyShot "Deadline Cloud for KeyShot$\r$\n- Install the integrated KeyShot submitter files to the installation directory$\r$\n- Register the plug-in with KeyShot by moving the Submit to AWS Deadline Cloud script to the KeyShot scripts folder$\r$\n- Sets the DEADLINE_KEYSHOT environment variable to point the Submit to AWS Deadline Cloud script to the submitter module"
     StrCpy $InstallationOverviewMessageDeadlineForBlender "Deadline Cloud for Blender 3.6$\r$\n- Compatible with Blender 3.6$\r$\n- Install the integrated Blender submitter files to the installation directory"
     StrCpy $InstallationOverviewMessageDeadlineForUnrealEngine "Deadline Cloud for Unreal Engine 5.2.1$\r$\n- Compatible with Unreal Engine 5$\r$\n- Install the Unreal Engine submitter files to the Plugin directory"
-    StrCpy $InstallationOverviewMessageDeadlineForCinema4D "Deadline Cloud for Cinema 4D S26$\r$\n- Compatible with Cinema 4D S26+.$\r$\n- Install DeadlineCloud.pyp plug-in to the installation directory.$\r$\n- Register the plug-in with Cinema 4D by creating or updating the g_additionalModulePath environment variable.$\r$\n- Install the deadline-cloud-for-cinema-4d libraries to the installation directory$\r$\n- Register the libraries with Deadline Cloud by creating or updating the CINEMA4D_DEADLINE_CLOUD_PYTHONPATH environment variable."
+    StrCpy $InstallationOverviewMessageDeadlineForCinema4D "Deadline Cloud for Cinema 4D S26$\r$\n- Compatible with Cinema 4D S26+.$\r$\n- Install DeadlineCloud.pyp plug-in to the installation directory.$\r$\n- Register the plug-in with Cinema 4D by creating or updating the g_additionalModulePath environment variable.$\r$\n- Install the deadline-cloud-for-cinema-4d libraries to the installation directory$\r$\n- Register the libraries with Deadline Cloud by creating or updating the DEADLINE_CLOUD_PYTHONPATH environment variable."
     StrCpy $InstallationOverviewMessageDeadlineForAfterEffects "Deadline Cloud for After Effects 2023$\r$\n- Compatible with After Effects 2023+.$\r$\n- Install the DeadlineCloudSubmitter.jsx plug-in to the scripts directory of After Effects."
 FunctionEnd
 
@@ -826,8 +826,8 @@ Function RemoveDeadlineCloudForCinema4D
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "Uninstalling Deadline Cloud for Cinema 4D"
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing g_additionalModulePAth modifications"
     EnVar::DeleteValue "g_additionalModulePath" "$INSTDIR\Submitters\Cinema4D\Plugins"
-    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing CINEMA4D_DEADLINE_CLOUD_PYTHONPATH modifications"
-    EnVar::DeleteValue "CINEMA4D_DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing DEADLINE_CLOUD_PYTHONPATH modifications"
+    EnVar::DeleteValue "DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Deadline Cloud for Cinema 4D successfully uninstalled"
 FunctionEnd
 Function un.RemoveDeadlineCloudForCinema4D
@@ -837,8 +837,8 @@ Function un.RemoveDeadlineCloudForCinema4D
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "Uninstalling Deadline Cloud for Cinema 4D"
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing g_additionalModulePAth modifications"
     EnVar::DeleteValue "g_additionalModulePath" "$INSTDIR\Submitters\Cinema4D\Plugins"
-    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing CINEMA4D_DEADLINE_CLOUD_PYTHONPATH modifications"
-    EnVar::DeleteValue "CINEMA4D_DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing DEADLINE_CLOUD_PYTHONPATH modifications"
+    EnVar::DeleteValue "DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Deadline Cloud for Cinema 4D successfully uninstalled"
 FunctionEnd
 
