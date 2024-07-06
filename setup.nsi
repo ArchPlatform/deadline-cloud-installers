@@ -210,6 +210,7 @@ Section "Deadline Cloud" deadline_cloud
 - Installs the Deadline protocol handler to handle the "deadline" URI scheme (e.g. for downloading job output)
 - Configures the Deadline Client as specified in the installer
 	*/
+	${LogLine} "$INSTDIR\install.log" "-------------------------------------------------"
     ${LogLine} "$INSTDIR\install.log" "Starting installing Deadline Cloud DeadlineClient"
     SetShellVarContext all
     ${LogLine} "$INSTDIR\install.log" "Creating temp directory"
@@ -245,6 +246,7 @@ Section "Deadline Cloud" deadline_cloud
     WriteRegStr HKCR "deadline" "URL Protocol" ""
     WriteRegStr HKCR "deadline\shell\open\command" "" '"$INSTDIR\DeadlineClient\deadline.exe" "handle-web-url" "%1"'
     ${LogLine} "$INSTDIR\install.log" "Finished installing DeadlineClient"
+    ${LogLine} "$INSTDIR\install.log" "-------------------------------------------------"
 
 SectionEnd
 LangString DESC_deadline_cloud ${LANG_ENGLISH} "CLI for interfacing with Deadline."
@@ -259,6 +261,7 @@ Deadline Cloud for Maya 2024
 - whl goes into $INST\Submitters\Maya\scripts
 - Move $INST\Submitters\Maya\scripts\deadline\maya_submitter\maya_submitter_plugin\* to $INST\Submitters\Maya\
 	*/
+	${LogLine} "$INSTDIR\install.log" "-------------------------------------------------"
 	${LogLine} "$INSTDIR\install.log" "Starting installing Deadline Cloud Maya"
     SetShellVarContext all
     CreateDirectory "$INSTDIR\Submitters\Maya"
@@ -324,6 +327,7 @@ Deadline Cloud for Maya 2024
     ${LogLine} "$INSTDIR\install.log" "Adding MAYA_MODULE_PATH variable"
     EnVar::AddValue "MAYA_MODULE_PATH" "$INSTDIR\Submitters\Maya"
     ${LogLine} "$INSTDIR\install.log" "Finished installing Deadline Cloud Maya"
+    ${LogLine} "$INSTDIR\install.log" "-------------------------------------------------"
 SectionEnd
 LangString DESC_deadline_cloud_for_maya ${LANG_ENGLISH} "Maya plugin for submitting jobs to AWS Deadline Cloud. Compatible with Maya 2023+"
 
@@ -397,6 +401,7 @@ Deadline Cloud for Cinema 4D S26
 - Register the libraries with Deadline Cloud by creating or updating the CINEMA4D_DEADLINE_CLOUD_PYTHONPATH environment variable.
 # TODO: Install PySide2 dependency with this
 	*/
+	${LogLine} "$INSTDIR\install.log" "-------------------------------------------------"
 	${LogLine} "$INSTDIR\install.log" "Starting installing Deadline Cloud Cinema 4D"
     SetShellVarContext all
     CreateDirectory "$INSTDIR\Submitters\Cinema4D"
@@ -469,6 +474,7 @@ Deadline Cloud for Cinema 4D S26
     ${LogLine} "$INSTDIR\install.log" "Adding CINEMA4D_DEADLINE_CLOUD_PYTHONPATH"
     EnVar::AddValue "CINEMA4D_DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
     ${LogLine} "$INSTDIR\install.log" "Finished installing Deadline Cloud Cinema 4D"
+    ${LogLine} "$INSTDIR\install.log" "-------------------------------------------------"
 SectionEnd
 LangString DESC_deadline_cloud_for_cinema_4d ${LANG_ENGLISH} "Cinema 4D plugin for submitting jobs to AWS Deadline Cloud. Compatible with Cinema 4D S26+"
 
@@ -479,7 +485,7 @@ Deadline Cloud for After Effects 2023
 - Compatible with After Effects 2023+.
 - Install the DeadlineCloudSubmitter.jsx plug-in to the scripts directory of After Effects.
 	*/
-
+	${LogLine} "$INSTDIR\install.log" "-------------------------------------------------"
     ${LogLine} "$INSTDIR\install.log" "Starting installing Deadline Cloud After Effects"
     SetShellVarContext all
 
@@ -493,6 +499,7 @@ Deadline Cloud for After Effects 2023
         ${EndIf}
     ${Next}
     ${LogLine} "$INSTDIR\install.log" "Finished installing Deadline Cloud After Effects"
+    ${LogLine} "$INSTDIR\install.log" "-------------------------------------------------"
 SectionEnd
 LangString DESC_deadline_cloud_for_after_effects ${LANG_ENGLISH} "After Effects plugin for submitting jobs to AWS Deadline Cloud. Compatible with After Effects 2023+"
 
@@ -633,13 +640,22 @@ Function CheckInstalledAfterEffectsVersion
 FunctionEnd
 
 Function InstallPySide
-	Exec '$R0 -m ensurepip'
+    ${LogLine} "$INSTDIR\install.log" "$R0 -m ensurepip"
+    nsExec::ExecToStack '$R0 -m ensurepip'
+    Pop $ExitCode
+    Pop $StdOutText
+    ${LogLine} "$INSTDIR\install.log" "  $StdOutText"
+
+	; Exec '$R0 -m ensurepip'
 	File ".\dist\${PYSIDE_LIBRARY_NAME}"
 	File ".\dist\${SHIBOKEN_LIBRARY_NAME}"
-	Exec '$R0 -m pip install--no-index --find-links="$INSTDIR\tmp" ${PYSIDE_LIBRARY_NAME} ${SHIBOKEN_LIBRARY_NAME}'
-	MessageBox MB_YESNO '$R0$\n$\nFind next?' IDYES +2
+	${LogLine} "$INSTDIR\install.log" "$R0 -m pip install--no-index --find-links=$INSTDIR\tmp ${PYSIDE_LIBRARY_NAME} ${SHIBOKEN_LIBRARY_NAME}"
+    nsExec::ExecToStack '$R0 -m pip install--no-index --find-links="$INSTDIR\tmp" ${PYSIDE_LIBRARY_NAME} ${SHIBOKEN_LIBRARY_NAME}'
+    Pop $ExitCode
+    Pop $StdOutText
+    ${LogLine} "$INSTDIR\install.log" "  $StdOutText"
+	;Exec '$R0 -m pip install--no-index --find-links="$INSTDIR\tmp" ${PYSIDE_LIBRARY_NAME} ${SHIBOKEN_LIBRARY_NAME}'
 	StrCpy $0 StopLocate
-
 	Push $0
 FunctionEnd
 
@@ -689,7 +705,7 @@ FunctionEnd
 
 
 Function CreateInstallationOverview
-    !insertmacro MUI_HEADER_TEXT "Arch Platform Technologies" "Path to the Deadline Cloud Unreal Plugin directory"
+    !insertmacro MUI_HEADER_TEXT "Arch Platform Technologies" "Installation Overview"
     nsDialogs::Create 1018
     ${NSD_CreateLabel} 0 0 100% 18u "Review the installation"
     Pop $0
