@@ -87,11 +87,11 @@ jobs:
           $REF = $REF.TrimStart("v")
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-${REF}-py3-none-any.whl" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-${REF}.tar.gz" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
-
-          pip install "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-${REF}-py3-none-any.whl"
           pip install -r requirements-installer.txt
           python.exe scripts/pyinstaller/make_exe.py
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-client-exe.zip" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline-cli-${REF}.zip"
+          
+          pip install "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-${REF}-py3-none-any.whl"
 
           $safeWorkspace = $Env:GITHUB_WORKSPACE -replace '\\','/'
           echo "windows-deadline-whl-path=$safeWorkspace/artifacts/deadline-${REF}-py3-none-any.whl" >> $Env:GITHUB_OUTPUT
