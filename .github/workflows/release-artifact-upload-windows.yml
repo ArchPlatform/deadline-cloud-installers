@@ -88,6 +88,7 @@ jobs:
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-${REF}-py3-none-any.whl" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-${REF}.tar.gz" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
           pip install -r requirements-installer.txt
+          python install PySide6-Essentials QtPy
           
           pip install "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-${REF}-py3-none-any.whl"
           
