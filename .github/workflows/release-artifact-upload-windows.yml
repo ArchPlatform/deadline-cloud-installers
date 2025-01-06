@@ -1,0 +1,252 @@
+name: Upload Release artifact to GitHub
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  package-deadline-cloud-windows:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout
+        with:
+          # repository: "Ahuge/deadline-cloud"
+          # path: "repositories/deadline-cloud"
+          ref: github-actions
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deadline-Cloud-Latest-Release
+        id: get-latest-release
+        run: |
+          echo "deadline-cloud-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/aws-deadline/deadline-cloud/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
+          echo "deadline-cloud-for-maya-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/aws-deadline/deadline-cloud-for-maya/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
+          echo "deadline-cloud-for-nuke-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/Ahuge/deadline-cloud-for-nuke/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
+          echo "deadline-cloud-for-cinema-4d-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/Ahuge/deadline-cloud-for-cinema-4d/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
+          echo "deadline-cloud-for-after-effects-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/ArchPlatform/deadline-cloud-for-after-effects/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
+      - uses: actions/checkout@v4
+        name: Checkout-Deadline-Cloud
+        with:
+          repository: "aws-deadline/deadline-cloud"
+          path: "repositories/deadline-cloud"
+          ref: ${{ steps.get-latest-release.outputs.deadline-cloud-releasetag }}
+          # ref: release
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v4
+        name: Checkout-Deadline-Cloud-For-Maya
+        with:
+          repository: "aws-deadline/deadline-cloud-for-maya"
+          path: "repositories/deadline-cloud-for-maya"
+          ref: ${{ steps.get-latest-release.outputs.deadline-cloud-for-maya-releasetag }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v4
+        name: Checkout-Deadline-Cloud-For-Nuke
+        with:
+          repository: "Ahuge/deadline-cloud-for-nuke"
+          path: "repositories/deadline-cloud-for-nuke"
+          ref: ${{ steps.get-latest-release.outputs.deadline-cloud-for-nuke-releasetag }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v4
+        name: Checkout-Deadline-Cloud-For-Cinema-4D
+        with:
+          repository: "Ahuge/deadline-cloud-for-cinema-4d"
+          path: "repositories/deadline-cloud-for-cinema-4d"
+          ref: ${{ steps.get-latest-release.outputs.deadline-cloud-for-cinema-4d-releasetag }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v4
+        name: Checkout-Deadline-Cloud-For-After-Effects
+        with:
+          repository: "ArchPlatform/deadline-cloud-for-after-effects"
+          path: "repositories/deadline-cloud-for-after-effects"
+          ref: ${{ steps.get-latest-release.outputs.deadline-cloud-for-after-effects-releasetag }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: |
+          pip install --upgrade hatch
+      - name: Build Package Deadline Cloud
+        id: build-source-deadline-cloud
+        run: |
+          New-Item $Env:GITHUB_WORKSPACE/artifacts -ItemType Directory
+          cd $Env:GITHUB_WORKSPACE/repositories/deadline-cloud
+          hatch -v build
+          # ls -lah
+          # ls -lah dist
+          # echo $(pwd)
+          $REF='${{ steps.get-latest-release.outputs.deadline-cloud-releasetag }}'.Split("+")[0]
+          $REF = $REF.TrimStart("v")
+          Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-${REF}-py3-none-any.whl" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
+          Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-${REF}.tar.gz" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
+          pip install -r requirements-installer.txt
+          python install PySide6-Essentials QtPy
+          
+          pip install "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-${REF}-py3-none-any.whl"
+          
+          (Get-Content "scripts/pyinstaller/deadline_cli.spec" -RAW) -replace "(?ms)\),.*?\(b_module_path \+ .*?\.\.\/\.\.\/THIRD_PARTY_LICENSES',.*?'.'\)", ")" | Set-Content "scripts/pyinstaller/deadline_cli.spec"
+          Get-Content "scripts/pyinstaller/deadline_cli.spec" | Write-Output
+          python.exe scripts/pyinstaller/make_exe.py
+          Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-client-exe.zip" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline-cli-${REF}.zip"
+
+          $safeWorkspace = $Env:GITHUB_WORKSPACE -replace '\\','/'
+          echo "windows-deadline-whl-path=$safeWorkspace/artifacts/deadline-${REF}-py3-none-any.whl" >> $Env:GITHUB_OUTPUT
+          echo "windows-deadline-tar-path=$safeWorkspace/artifacts/deadline-${REF}.tar.gz" >> $Env:GITHUB_OUTPUT
+      - name: Build depsBundle
+        id: build-deps
+        env:
+          PYTHON_PLATFORM: "win_amd64"
+          PLATFORM: "windows"
+        run: |
+          cd $Env:GITHUB_WORKSPACE/repositories/deadline-cloud
+          python.exe $Env:GITHUB_WORKSPACE/depsBundle.py
+          $REF='${{ steps.get-latest-release.outputs.deadline-cloud-releasetag }}'.Split("+")[0]
+          $REF = $REF.TrimStart("v")
+          Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dependency_bundle/deadline-deps.zip" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline-deps-${REF}-$Env:PLATFORM.zip"
+          echo "Copy-Item -Path $Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dependency_bundle/deadline-deps.zip -Destination $Env:GITHUB_WORKSPACE/artifacts/deadline-deps-${REF}-$Env:PLATFORM.zip"
+          $safeWorkspace = $Env:GITHUB_WORKSPACE -replace '\\','/'
+          echo "windows-deadline-dependency-path=$safeWorkspace/artifacts/deadline-deps-${REF}-$Env:PLATFORM.zip" >> $Env:GITHUB_OUTPUT
+
+      - name: Build Package Maya
+        id: build-source-maya
+        run: |
+          cd $Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-maya
+          hatch -v build
+          $REF='${{ steps.get-latest-release.outputs.deadline-cloud-for-maya-releasetag }}'.Split("+")[0]
+          $REF = $REF.TrimStart("v")
+          Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-maya/dist/deadline_cloud_for_maya-${REF}-py3-none-any.whl" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline_cloud_for_maya-${REF}-py3-none-any.whl"
+          $safeWorkspace = $Env:GITHUB_WORKSPACE -replace '\\','/'
+          echo "windows-maya-whl-path=$safeWorkspace/artifacts/deadline_cloud_for_maya-${REF}-py3-none-any.whl" >> $Env:GITHUB_OUTPUT
+
+      - name: Build Package Nuke
+        id: build-source-nuke
+        run: |
+          cd $Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-nuke
+          hatch -v build
+          $REF='${{ steps.get-latest-release.outputs.deadline-cloud-for-nuke-releasetag }}'.Split("+")[0]
+          $REF = $REF.TrimStart("v")
+          Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-nuke/dist/deadline_cloud_for_nuke-${REF}-py3-none-any.whl" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline_cloud_for_nuke-${REF}-py3-none-any.whl"
+          $safeWorkspace = $Env:GITHUB_WORKSPACE -replace '\\','/'
+          echo "windows-nuke-whl-path=$safeWorkspace/artifacts/deadline_cloud_for_nuke-${REF}-py3-none-any.whl" >> $Env:GITHUB_OUTPUT
+
+      - name: Build Package Cinema 4D
+        id: build-source-cinema-4d
+        run: |
+          cd $Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d
+          hatch -v build
+          $REF='${{ steps.get-latest-release.outputs.deadline-cloud-for-cinema-4d-releasetag }}'.Split("+")[0]
+          $REF = $REF.TrimStart("v")
+          Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/deadline_cloud_for_cinema_4d-${REF}-py3-none-any.whl" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline_cloud_for_cinema_4d-${REF}-py3-none-any.whl"
+          Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/deadline_cloud_extension/DeadlineCloud.pyp" -Destination "$Env:GITHUB_WORKSPACE/artifacts/DeadlineCloud-${REF}.pyp"
+
+          # Download PySide6-Essentials for C4D to use
+          python -m pip download --dest "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/PySide" --only-binary=:all: PySide6-Essentials
+          Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/PySide/*.whl" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
+          
+          Get-ChildItem "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/PySide" -Recurse  -Include "PySide6_Essentials-*win_amd64.whl" | Foreach-Object {
+            Copy-Item -Path "$_" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
+          }
+          Get-ChildItem "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/PySide" -Recurse  -Include "shiboken6-*win_amd64.whl" | Foreach-Object {
+            Copy-Item -Path "$_" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
+          }
+
+          $safeWorkspace = $Env:GITHUB_WORKSPACE -replace '\\','/'
+          echo "windows-cinema-whl-path=$safeWorkspace/artifacts/deadline_cloud_for_cinema_4d-${REF}-py3-none-any.whl" >> $Env:GITHUB_OUTPUT
+          echo "windows-cinema-plugin-path=$safeWorkspace/artifacts/DeadlineCloud-${REF}.pyp" >> $Env:GITHUB_OUTPUT
+
+      - name: Build Package After Effects
+        id: build-source-after-effects
+        run: |
+          cd $Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-after-effects
+          python jsxbundler.py --source src/deadline/ae_submitter/OpenAESubmitter.jsx --destination dist/jsxbundle/DeadlineCloudSubmitter.jsx
+          hatch -v build
+          $REF='${{ steps.get-latest-release.outputs.deadline-cloud-for-after-effects-releasetag }}'.Split("+")[0]
+          $REF = $REF.TrimStart("v")
+          Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-after-effects/dist/jsxbundle/DeadlineCloudSubmitter.jsx" -Destination "$Env:GITHUB_WORKSPACE/artifacts/DeadlineCloudSubmitter-${REF}.jsx"
+
+          $safeWorkspace = $Env:GITHUB_WORKSPACE -replace '\\','/'
+          echo "windows-after-effects-jsx-path=$safeWorkspace/artifacts/DeadlineCloudSubmitter-${REF}.jsx" >> $Env:GITHUB_OUTPUT
+
+      - name: Setup Windows Installer
+        run: |
+          $VERSION=$($Env:GITHUB_REF.Split("/")[-1])
+          $VERSION_NSIS=$VERSION.TrimStart('v')
+          (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace 'REPLACE_PRODUCT_VERSION', "$VERSION_NSIS" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
+          (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace 'dist', "artifacts" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
+          
+          $DEADLINE_CLOUD_REF='${{ steps.get-latest-release.outputs.deadline-cloud-releasetag }}'.Split("+")[0].TrimStart("v")
+          echo "Updating DEADLINE_CLOUD_EXECUTABLE_NAME..."
+          (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define DEADLINE_CLOUD_EXECUTABLE_NAME "deadline-cli-0.0.0.zip"', "!define DEADLINE_CLOUD_EXECUTABLE_NAME `"deadline-cli-${DEADLINE_CLOUD_REF}.zip`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
+          echo "Updating DEADLINE_CLOUD_LIBRARY_NAME..."
+          (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define DEADLINE_CLOUD_LIBRARY_NAME "deadline-0.0.0-py3-none-any.whl"', "!define DEADLINE_CLOUD_LIBRARY_NAME `"deadline-${DEADLINE_CLOUD_REF}-py3-none-any.whl`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
+          echo "Updating DEADLINE_CLOUD_LIBRARY_DEPS..."
+          (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define DEADLINE_CLOUD_LIBRARY_DEPS "deadline-deps-0.0.0-windows.zip"', "!define DEADLINE_CLOUD_LIBRARY_DEPS `"deadline-deps-${DEADLINE_CLOUD_REF}-windows.zip`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
+
+          $CINEMA_4D_REF='${{ steps.get-latest-release.outputs.deadline-cloud-for-cinema-4d-releasetag }}'.Split("+")[0].TrimStart("v")
+          echo "Updating CINEMA_4D_PLUGIN_NAME..."
+          (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define CINEMA_4D_PLUGIN_NAME "DeadlineCloud-0.0.0.pyp"', "!define CINEMA_4D_PLUGIN_NAME `"DeadlineCloud-${CINEMA_4D_REF}.pyp`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
+          echo "Updating CINEMA_4D_LIBRARY_NAME..."
+          (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define CINEMA_4D_LIBRARY_NAME "deadline_cloud_for_cinema_4d-0.0.0-py3-none-any.whl"', "!define CINEMA_4D_LIBRARY_NAME `"deadline_cloud_for_cinema_4d-${CINEMA_4D_REF}-py3-none-any.whl`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
+
+          $AFTER_EFFECTS_REF='${{ steps.get-latest-release.outputs.deadline-cloud-for-after-effects-releasetag }}'.Split("+")[0].TrimStart("v")
+          echo "Updating AFTER_EFFECTS_PLUGIN_NAME..."
+          (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define AFTER_EFFECTS_PLUGIN_NAME "DeadlineCloudSubmitter-0.0.0.jsx"', "!define AFTER_EFFECTS_PLUGIN_NAME `"DeadlineCloudSubmitter-${AFTER_EFFECTS_REF}.jsx`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
+
+          $MAYA_REF='${{ steps.get-latest-release.outputs.deadline-cloud-for-maya-releasetag }}'.Split("+")[0].TrimStart("v")
+          echo "Updating MAYA_LIBRARY_NAME..."
+          (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define MAYA_LIBRARY_NAME "deadline_cloud_for_maya-0.0.0-py3-none-any.whl"', "!define MAYA_LIBRARY_NAME `"deadline_cloud_for_maya-${MAYA_REF}-py3-none-any.whl`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
+
+          Get-ChildItem "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/PySide" -Recurse  -Include "PySide6_Essentials-*win_amd64.whl" | Foreach-Object {
+            $PYSIDE_LIBRARY_NAME = $_.Name
+            echo "Updating PYSIDE_LIBRARY_NAME..."
+            (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define PYSIDE_LIBRARY_NAME "PySide6_Essentials-0.0.0-cp39-abi3-win_amd64.whl"', "!define PYSIDE_LIBRARY_NAME `"${PYSIDE_LIBRARY_NAME}`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
+          }
+          Get-ChildItem "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/PySide" -Recurse  -Include "shiboken6-*win_amd64.whl" | Foreach-Object {
+            $SHIBOKEN_LIBRARY_NAME = $_.Name
+            echo "Updating SHIBOKEN_LIBRARY_NAME..."
+            (Get-Content "$Env:GITHUB_WORKSPACE/setup.nsi") -replace '!define SHIBOKEN_LIBRARY_NAME "shiboken6-0.0.0-cp39-abi3-win_amd64.whl"', "!define SHIBOKEN_LIBRARY_NAME `"${SHIBOKEN_LIBRARY_NAME}`"" | Set-Content "$Env:GITHUB_WORKSPACE/setup.nsi"
+          }
+
+      # Build Windows Installer
+      - name: Create Windows Installer
+        uses: joncloud/makensis-action@v4
+        with:
+          script-file: ${{ github.workspace }}/setup.nsi
+
+      - name: Move Windows Installer
+        id: move-windows-installer
+        run: |
+          cd $Env:GITHUB_WORKSPACE
+          dir $Env:GITHUB_WORKSPACE
+          $REF = $Env:GITHUB_REF.Split("/")[-1].TrimStart("v")
+          Copy-Item -Path "deadline-cloud-submitters-x86-64-installer.exe" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline-cloud-submitters-${REF}-x86-64.exe"
+          $safeWorkspace = $Env:GITHUB_WORKSPACE -replace '\\','/'
+          echo "windows-installer-name=deadline-cloud-submitters-${REF}-x86-64.exe" >> $Env:GITHUB_OUTPUT
+          echo "windows-installer-path=$safeWorkspace/artifacts/deadline-cloud-submitters-${REF}-x86-64.exe" >> $Env:GITHUB_OUTPUT
+
+      - name: Upload Release Asset
+        id: upload-release-asset-windows
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            ${{steps.build-source-deadline-cloud.outputs.windows-deadline-whl-path}}
+            ${{steps.build-source-deadline-cloud.outputs.windows-deadline-tar-path}}
+            ${{steps.build-deps.outputs.windows-deadline-dependency-path}}
+            ${{steps.build-source-maya.outputs.windows-maya-whl-path}}
+            ${{steps.build-source-nuke.outputs.windows-nuke-whl-path}}
+            ${{steps.build-source-cinema-4d.outputs.windows-cinema-whl-path}}
+            ${{steps.build-source-cinema-4d.outputs.windows-cinema-plugin-path}}
+            ${{steps.build-source-after-effects.outputs.windows-after-effects-jsx-path}}
+            ${{steps.move-windows-installer.outputs.windows-installer-path}}
