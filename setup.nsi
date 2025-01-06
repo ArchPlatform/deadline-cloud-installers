@@ -489,6 +489,16 @@ Deadline Cloud for Cinema 4D S26
 
     ${LogLine} "$INSTDIR\install.log" "Adding DEADLINE_CLOUD_PYTHONPATH"
     EnVar::AddValue "DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
+
+    ${LogLine} "$INSTDIR\install.log" "Adding C4DPYTHONPATH39"
+    EnVar::AddValue "C4DPYTHONPATH39" "$INSTDIR\Submitters\Cinema4D"
+
+    ${LogLine} "$INSTDIR\install.log" "Adding C4DPYTHONPATH310"
+    EnVar::AddValue "C4DPYTHONPATH310" "$INSTDIR\Submitters\Cinema4D"
+
+    ${LogLine} "$INSTDIR\install.log" "Adding C4DPYTHONPATH311"
+    EnVar::AddValue "C4DPYTHONPATH311" "$INSTDIR\Submitters\Cinema4D"
+
     ${LogLine} "$INSTDIR\install.log" "Finished installing Deadline Cloud Cinema 4D"
     ${LogLine} "$INSTDIR\install.log" "-------------------------------------------------"
 SectionEnd
