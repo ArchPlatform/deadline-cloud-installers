@@ -91,7 +91,7 @@ jobs:
           
           pip install "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-${REF}-py3-none-any.whl"
           
-          (Get-Content "scripts/pyinstaller/deadline_cli.spec") -replace "(b_module_path + '/../../THIRD_PARTY_LICENSES',\n     '.')", "" | Set-Content "scripts/pyinstaller/deadline_cli.spec"
+          (Get-Content "scripts/pyinstaller/deadline_cli.spec" -RAW) -replace "(?ms)\),.*?\(b_module_path \+ .*?\.\.\/\.\.\/THIRD_PARTY_LICENSES',.*?'.'\)", ")" | Set-Content "scripts/pyinstaller/deadline_cli.spec"
           Get-Content "scripts/pyinstaller/deadline_cli.spec" | Write-Output
           python.exe scripts/pyinstaller/make_exe.py
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-client-exe.zip" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline-cli-${REF}.zip"
