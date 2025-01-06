@@ -64,8 +64,8 @@ jobs:
         with:
           repository: "ArchPlatform/deadline-cloud-for-after-effects"
           path: "repositories/deadline-cloud-for-after-effects"
-          # ref: ${{ steps.get-latest-release.outputs.deadline-cloud-for-after-effects-releasetag }}
-          # token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ steps.get-latest-release.outputs.deadline-cloud-for-after-effects-releasetag }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
