@@ -88,6 +88,13 @@ jobs:
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-${REF}-py3-none-any.whl" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-${REF}.tar.gz" -Destination "$Env:GITHUB_WORKSPACE/artifacts/"
           pip install -r requirements-installer.txt
+          
+          [Environment]::SetEnvironmentVariable(
+            "PythonPath",
+            [Environment]::GetEnvironmentVariable("PythonPath", [EnvironmentVariableTarget]::Machine) + ";$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/src",
+            [EnvironmentVariableTarget]::Machine
+          )
+          
           python.exe scripts/pyinstaller/make_exe.py
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dist/deadline-client-exe.zip" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline-cli-${REF}.zip"
           
