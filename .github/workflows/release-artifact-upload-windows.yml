@@ -21,15 +21,15 @@ jobs:
       - name: Deadline-Cloud-Latest-Release
         id: get-latest-release
         run: |
-          echo "deadline-cloud-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/Ahuge/deadline-cloud/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
+          echo "deadline-cloud-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/aws-deadline/deadline-cloud/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
           echo "deadline-cloud-for-maya-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/aws-deadline/deadline-cloud-for-maya/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
           echo "deadline-cloud-for-nuke-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/Ahuge/deadline-cloud-for-nuke/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
           echo "deadline-cloud-for-cinema-4d-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/Ahuge/deadline-cloud-for-cinema-4d/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
-          echo "deadline-cloud-for-after-effects-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/Ahuge/deadline-cloud-for-after-effects/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
+          echo "deadline-cloud-for-after-effects-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/ArchPlatform/deadline-cloud-for-after-effects/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
       - uses: actions/checkout@v4
         name: Checkout-Deadline-Cloud
         with:
-          repository: "Ahuge/deadline-cloud"
+          repository: "aws-deadline/deadline-cloud"
           path: "repositories/deadline-cloud"
           ref: ${{ steps.get-latest-release.outputs.deadline-cloud-releasetag }}
           # ref: release
@@ -62,7 +62,7 @@ jobs:
       - uses: actions/checkout@v4
         name: Checkout-Deadline-Cloud-For-After-Effects
         with:
-          repository: "epmog/deadline-cloud-for-after-effects"
+          repository: "ArchPlatform/deadline-cloud-for-after-effects"
           path: "repositories/deadline-cloud-for-after-effects"
           # ref: ${{ steps.get-latest-release.outputs.deadline-cloud-for-after-effects-releasetag }}
           # token: ${{ secrets.GITHUB_TOKEN }}
