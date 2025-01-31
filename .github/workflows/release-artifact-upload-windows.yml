@@ -3,6 +3,8 @@ name: Upload Release artifact to GitHub
 on:
   release:
     types: [published]
+  schedule:
+    - cron: "0 0 1 * *"
 
 jobs:
   package-deadline-cloud-windows:
