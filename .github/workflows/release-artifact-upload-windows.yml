@@ -139,7 +139,7 @@ jobs:
           cd $Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-nuke
           $REF='${{ steps.get-latest-release.outputs.deadline-cloud-for-nuke-releasetag }}'.Split("+")[0]
           $REF = $REF.TrimStart("v")
-         try { git tag $REF } catch {}
+          try { git tag $REF } catch {}
           hatch -v build
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-nuke/dist/deadline_cloud_for_nuke-${REF}-py3-none-any.whl" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline_cloud_for_nuke-${REF}-py3-none-any.whl"
           $safeWorkspace = $Env:GITHUB_WORKSPACE -replace '\\','/'
