@@ -86,6 +86,7 @@ jobs:
           $REF='${{ steps.get-latest-release.outputs.deadline-cloud-releasetag }}'.Split("+")[0]
           $REF = $REF.TrimStart("v")
           try { git tag $REF } catch {}
+          if ("$(git tag -l $REF)" -eq "") { git tag $REF -m "local tag" } else { echo "Skipping... Tag already exists"}
           hatch -v build
           # ls -lah
           # ls -lah dist
@@ -115,7 +116,7 @@ jobs:
           python.exe $Env:GITHUB_WORKSPACE/depsBundle.py
           $REF='${{ steps.get-latest-release.outputs.deadline-cloud-releasetag }}'.Split("+")[0]
           $REF = $REF.TrimStart("v")
-          try { git tag $REF } catch {}
+          if ("$(git tag -l $REF)" -eq "") { git tag $REF -m "local tag" } else { echo "Skipping... Tag already exists"}
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dependency_bundle/deadline-deps.zip" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline-deps-${REF}-$Env:PLATFORM.zip"
           echo "Copy-Item -Path $Env:GITHUB_WORKSPACE/repositories/deadline-cloud/dependency_bundle/deadline-deps.zip -Destination $Env:GITHUB_WORKSPACE/artifacts/deadline-deps-${REF}-$Env:PLATFORM.zip"
           $safeWorkspace = $Env:GITHUB_WORKSPACE -replace '\\','/'
@@ -127,7 +128,7 @@ jobs:
           cd $Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-maya
           $REF='${{ steps.get-latest-release.outputs.deadline-cloud-for-maya-releasetag }}'.Split("+")[0]
           $REF = $REF.TrimStart("v")
-          try { git tag $REF } catch {}
+          if ("$(git tag -l $REF)" -eq "") { git tag $REF -m "local tag" } else { echo "Skipping... Tag already exists"}
           hatch -v build
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-maya/dist/deadline_cloud_for_maya-${REF}-py3-none-any.whl" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline_cloud_for_maya-${REF}-py3-none-any.whl"
           $safeWorkspace = $Env:GITHUB_WORKSPACE -replace '\\','/'
@@ -139,7 +140,7 @@ jobs:
           cd $Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-nuke
           $REF='${{ steps.get-latest-release.outputs.deadline-cloud-for-nuke-releasetag }}'.Split("+")[0]
           $REF = $REF.TrimStart("v")
-          try { git tag $REF } catch {}
+          if ("$(git tag -l $REF)" -eq "") { git tag $REF -m "local tag" } else { echo "Skipping... Tag already exists"}
           hatch -v build
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-nuke/dist/deadline_cloud_for_nuke-${REF}-py3-none-any.whl" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline_cloud_for_nuke-${REF}-py3-none-any.whl"
           $safeWorkspace = $Env:GITHUB_WORKSPACE -replace '\\','/'
@@ -151,7 +152,7 @@ jobs:
           cd $Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d
           $REF='${{ steps.get-latest-release.outputs.deadline-cloud-for-cinema-4d-releasetag }}'.Split("+")[0]
           $REF = $REF.TrimStart("v")
-          try { git tag $REF } catch {}
+          if ("$(git tag -l $REF)" -eq "") { git tag $REF -m "local tag" } else { echo "Skipping... Tag already exists"}
           hatch -v build
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/dist/deadline_cloud_for_cinema_4d-${REF}-py3-none-any.whl" -Destination "$Env:GITHUB_WORKSPACE/artifacts/deadline_cloud_for_cinema_4d-${REF}-py3-none-any.whl"
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-cinema-4d/deadline_cloud_extension/DeadlineCloud.pyp" -Destination "$Env:GITHUB_WORKSPACE/artifacts/DeadlineCloud-${REF}.pyp"
@@ -178,7 +179,7 @@ jobs:
           python jsxbundler.py --source src/deadline/ae_submitter/OpenAESubmitter.jsx --destination dist/jsxbundle/DeadlineCloudSubmitter.jsx
           $REF='${{ steps.get-latest-release.outputs.deadline-cloud-for-after-effects-releasetag }}'.Split("+")[0]
           $REF = $REF.TrimStart("v")
-          try { git tag $REF } catch {}
+          if ("$(git tag -l $REF)" -eq "") { git tag $REF -m "local tag" } else { echo "Skipping... Tag already exists"}
           hatch -v build
           Copy-Item -Path "$Env:GITHUB_WORKSPACE/repositories/deadline-cloud-for-after-effects/dist/jsxbundle/DeadlineCloudSubmitter.jsx" -Destination "$Env:GITHUB_WORKSPACE/artifacts/DeadlineCloudSubmitter-${REF}.jsx"
 
