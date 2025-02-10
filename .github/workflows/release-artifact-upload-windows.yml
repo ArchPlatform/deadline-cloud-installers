@@ -26,7 +26,7 @@ jobs:
           echo "deadline-cloud-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/aws-deadline/deadline-cloud/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
           echo "deadline-cloud-for-maya-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/aws-deadline/deadline-cloud-for-maya/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
           echo "Overriding deadline-cloud-for-maya to use latest commit in branch mainline"
-          echo "deadline-cloud-for-maya-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/aws-deadline/deadline-cloud-for-maya/commits/mainlin").Content | ConvertFrom-Json).sha)" >> $Env:GITHUB_OUTPUT
+          echo "deadline-cloud-for-maya-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/aws-deadline/deadline-cloud-for-maya/commits/mainline").Content | ConvertFrom-Json).sha)" >> $Env:GITHUB_OUTPUT
           echo "deadline-cloud-for-nuke-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/aws-deadline/deadline-cloud-for-nuke/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
           echo "deadline-cloud-for-cinema-4d-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/aws-deadline/deadline-cloud-for-cinema-4d/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
           echo "deadline-cloud-for-after-effects-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/ArchPlatform/deadline-cloud-for-after-effects/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
