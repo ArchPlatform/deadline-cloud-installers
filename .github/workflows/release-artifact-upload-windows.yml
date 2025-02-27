@@ -30,7 +30,7 @@ jobs:
           echo "deadline-cloud-for-nuke-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/aws-deadline/deadline-cloud-for-nuke/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
           echo "deadline-cloud-for-cinema-4d-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/aws-deadline/deadline-cloud-for-cinema-4d/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
           echo "Overriding deadline-cloud-for-cinema-4d to use latest commit in branch c4dToken"
-          echo "deadline-cloud-for-cinema-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/karthikbekalp/deadline-cloud-for-maya/commits/c4dToken").Content | ConvertFrom-Json).sha)" >> $Env:GITHUB_OUTPUT
+          echo "deadline-cloud-for-cinema-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/karthikbekalp/deadline-cloud-for-cinema-4d/commits/c4dToken").Content | ConvertFrom-Json).sha)" >> $Env:GITHUB_OUTPUT
           echo "deadline-cloud-for-after-effects-releasetag=$(((Invoke-WebRequest "https://api.github.com/repos/ArchPlatform/deadline-cloud-for-after-effects/releases/latest").Content | ConvertFrom-Json).tag_name)" >> $Env:GITHUB_OUTPUT
       - uses: actions/checkout@v4
         name: Checkout-Deadline-Cloud
