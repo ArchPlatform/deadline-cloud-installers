@@ -1,0 +1,199 @@
+name: Upload Release artifact to GitHub
+
+# on:
+#   release:
+#     types: [published]
+
+jobs:
+  package-deadline-cloud-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout
+        with:
+          # repository: "Ahuge/deadline-cloud"
+          # path: "repositories/deadline-cloud"
+          ref: github-actions
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install NSIS & makeself
+        run: |
+          # sudo bash -c 'echo "deb http://ftp.debian.org/debian unstable main contrib non-free" >> /etc/apt/sources.list.d/unstable.list'
+          sudo apt-get -y update
+          sudo apt-get -y install makeself
+      - name: Deadline-Cloud-Latest-Release
+        id: get-latest-release
+        run: |
+          echo "deadline-cloud-releasetag=$(curl -s https://api.github.com/repos/Ahuge/deadline-cloud/releases/latest | jq '.tag_name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
+          echo "deadline-cloud-for-maya-releasetag=$(curl -s https://api.github.com/repos/Ahuge/deadline-cloud-for-maya/releases/latest | jq '.tag_name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
+          echo "deadline-cloud-for-nuke-releasetag=$(curl -s https://api.github.com/repos/Ahuge/deadline-cloud-for-nuke/releases/latest | jq '.tag_name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
+          echo "deadline-cloud-for-cinema-4d-releasetag=$(curl -s https://api.github.com/repos/Ahuge/deadline-cloud-for-cinema-4d/releases/latest | jq '.tag_name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
+          echo "deadline-cloud-for-after-effects-releasetag=$(curl -s https://api.github.com/repos/Ahuge/deadline-cloud-for-after-effects/releases/latest | jq '.tag_name' | sed 's/\"//g')" >> $GITHUB_OUTPUT
+      - uses: actions/checkout@v4
+        name: Checkout-Deadline-Cloud
+        with:
+          repository: "Ahuge/deadline-cloud"
+          path: "repositories/deadline-cloud"
+          ref: ${{ steps.get-latest-release.outputs.deadline-cloud-releasetag }}
+          # ref: release
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v4
+        name: Checkout-Deadline-Cloud-For-Maya
+        with:
+          repository: "Ahuge/deadline-cloud-for-maya"
+          path: "repositories/deadline-cloud-for-maya"
+          ref: ${{ steps.get-latest-release.outputs.deadline-cloud-for-maya-releasetag }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v4
+        name: Checkout-Deadline-Cloud-For-Nuke
+        with:
+          repository: "Ahuge/deadline-cloud-for-nuke"
+          path: "repositories/deadline-cloud-for-nuke"
+          ref: ${{ steps.get-latest-release.outputs.deadline-cloud-for-nuke-releasetag }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v4
+        name: Checkout-Deadline-Cloud-For-Cinema-4D
+        with:
+          repository: "Ahuge/deadline-cloud-for-cinema-4d"
+          path: "repositories/deadline-cloud-for-cinema-4d"
+          ref: ${{ steps.get-latest-release.outputs.deadline-cloud-for-cinema-4d-releasetag }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v4
+        name: Checkout-Deadline-Cloud-For-After-Effects
+        with:
+          repository: "Ahuge/deadline-cloud-for-after-effects"
+          path: "repositories/deadline-cloud-for-after-effects"
+          ref: ${{ steps.get-latest-release.outputs.deadline-cloud-for-after-effects-releasetag }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: |
+          pip install --upgrade hatch
+      - name: Build Package Deadline Cloud
+        id: build-source-deadline-cloud
+        env:
+          GITHUB_REF: "refs/tags/v0.0.1"
+        run: |
+          mkdir ${GITHUB_WORKSPACE}/artifacts
+          cd ${GITHUB_WORKSPACE}/repositories/deadline-cloud
+          hatch -v build
+          # ls -lah
+          # ls -lah dist
+          # echo $(pwd)
+          REF="$(cut -d'+' -f1 <<<'${{ steps.get-latest-release.outputs.deadline-cloud-releasetag }}')"
+          cp ${GITHUB_WORKSPACE}/repositories/deadline-cloud/dist/deadline-${REF}-py3-none-any.whl ${GITHUB_WORKSPACE}/repositories/deadline-cloud/dist/deadline-${REF}.tar.gz ${GITHUB_WORKSPACE}/artifacts/
+          # cp ${GITHUB_WORKSPACE}/repositories/deadline-cloud/dist/deadline-0.0.post1+gdffc71e-py3-none-any.whl ${GITHUB_WORKSPACE}/repositories/deadline-cloud/dist/deadline-0.0.post1+gdffc71e.tar.gz ${GITHUB_WORKSPACE}/artifacts/
+          # echo "linux-deadline-whl-path=${GITHUB_WORKSPACE}/artifacts/deadline-${GITHUB_REF##*/}-py3-none-any.whl" >> $GITHUB_OUTPUT
+          echo "linux-deadline-whl-path=${GITHUB_WORKSPACE}/artifacts/deadline-${REF}-py3-none-any.whl" >> $GITHUB_OUTPUT
+          # echo "linux-deadline-tar-path=${GITHUB_WORKSPACE}/artifacts/deadline-${GITHUB_REF##*/}.tar.gz" >> $GITHUB_OUTPUT
+          echo "linux-deadline-tar-path=${GITHUB_WORKSPACE}/artifacts/deadline-${REF}.tar.gz" >> $GITHUB_OUTPUT
+      - name: Build depsBundle
+        id: build-deps
+        env:
+          PYTHON_PLATFORM: "manylinux2014_x86_64"
+          PLATFORM: "linux"
+          GITHUB_REF: "refs/tags/v0.0.1"
+        run: |
+          ls -lah
+          cd ${GITHUB_WORKSPACE}/repositories/deadline-cloud
+          ls -lah
+          python ${GITHUB_WORKSPACE}/depsBundle.py
+          REF="$(cut -d'+' -f1 <<<'${{ steps.get-latest-release.outputs.deadline-cloud-releasetag }}')"
+          cp dependency_bundle/deadline-deps.zip ${GITHUB_WORKSPACE}/artifacts/deadline-deps-${REF}-${PLATFORM}.zip
+          echo "linux-deadline-dependency-path=${GITHUB_WORKSPACE}/artifacts/deadline-deps-${REF}-${PLATFORM}.zip" >> $GITHUB_OUTPUT
+
+      - name: Build Package Maya
+        id: build-source-maya
+        env:
+          GITHUB_REF: "refs/tags/v0.0.1"
+        run: |
+          cd ${GITHUB_WORKSPACE}/repositories/deadline-cloud-for-maya
+          hatch -v build
+          REF="$(cut -d'+' -f1 <<<'${{ steps.get-latest-release.outputs.deadline-cloud-for-maya-releasetag }}' | sed s/^v//g)"
+          echo "REF: ${REF}"
+          cp ${GITHUB_WORKSPACE}/repositories/deadline-cloud-for-maya/dist/deadline_cloud_for_maya-${REF}-py3-none-any.whl ${GITHUB_WORKSPACE}/artifacts/deadline_cloud_for_maya-${REF}-py3-none-any.whl
+          echo "linux-maya-whl-path=${GITHUB_WORKSPACE}/artifacts/deadline_cloud_for_maya-${REF}-py3-none-any.whl" >> $GITHUB_OUTPUT
+
+      - name: Build Package Nuke
+        id: build-source-nuke
+        env:
+          GITHUB_REF: "refs/tags/v0.0.1"
+        run: |
+          cd ${GITHUB_WORKSPACE}/repositories/deadline-cloud-for-nuke
+          hatch -v build
+          REF="$(cut -d'+' -f1 <<<'${{ steps.get-latest-release.outputs.deadline-cloud-for-nuke-releasetag }}' | sed s/^v//g)"
+          echo "REF: ${REF}"
+          cp ${GITHUB_WORKSPACE}/repositories/deadline-cloud-for-nuke/dist/deadline_cloud_for_nuke-${REF}-py3-none-any.whl ${GITHUB_WORKSPACE}/artifacts/deadline_cloud_for_nuke-${REF}-py3-none-any.whl
+          echo "linux-nuke-whl-path=${GITHUB_WORKSPACE}/artifacts/deadline_cloud_for_nuke-${REF}-py3-none-any.whl" >> $GITHUB_OUTPUT
+
+      - name: Build Package Cinema 4D
+        id: build-source-cinema-4d
+        env:
+          GITHUB_REF: "refs/tags/v0.0.1"
+        run: |
+          cd ${GITHUB_WORKSPACE}/repositories/deadline-cloud-for-cinema-4d
+          hatch -v build
+          REF="$(cut -d'+' -f1 <<<'${{ steps.get-latest-release.outputs.deadline-cloud-for-cinema-4d-releasetag }}' | sed s/^v//g)"
+          echo "REF: ${REF}"
+          cp ${GITHUB_WORKSPACE}/repositories/deadline-cloud-for-cinema-4d/dist/deadline_cloud_for_cinema_4d-${REF}-py3-none-any.whl ${GITHUB_WORKSPACE}/artifacts/deadline_cloud_for_cinema_4d-${REF}-py3-none-any.whl
+          cp ${GITHUB_WORKSPACE}/repositories/deadline-cloud-for-cinema-4d/deadline_cloud_extension/DeadlineCloud.pyp ${GITHUB_WORKSPACE}/artifacts/DeadlineCloud-${REF}.pyp
+          echo "linux-cinema-whl-path=${GITHUB_WORKSPACE}/artifacts/deadline_cloud_for_cinema_4d-${REF}-py3-none-any.whl" >> $GITHUB_OUTPUT
+          echo "linux-cinema-plugin-path=${GITHUB_WORKSPACE}/artifacts/DeadlineCloud-${REF}.pyp" >> $GITHUB_OUTPUT
+
+      - name: Build Package After Effects
+        id: build-source-after-effects
+        env:
+          GITHUB_REF: "refs/tags/v0.0.1"
+        run: |
+          cd ${GITHUB_WORKSPACE}/repositories/deadline-cloud-for-after-effects
+          python jsxbundler.py --source src/deadline/ae_submitter/OpenAESubmitter.jsx --destination dist/jsxbundle/DeadlineCloudSubmitter.jsx
+          hatch -v build
+          REF="$(cut -d'+' -f1 <<<'${{ steps.get-latest-release.outputs.deadline-cloud-for-after-effects-releasetag }}' | sed s/^v//g)"
+          echo "REF: ${REF}"
+          cp ${GITHUB_WORKSPACE}/repositories/deadline-cloud-for-after-effects/dist/jsxbundle/DeadlineCloudSubmitter.jsx ${GITHUB_WORKSPACE}/artifacts/DeadlineCloudSubmitter-${REF}.jsx
+          echo "linux-after-effects-jsx-path=${GITHUB_WORKSPACE}/artifacts/DeadlineCloudSubmitter-${REF}.jsx" >> $GITHUB_OUTPUT
+
+      - name: List Artifacts directory
+        id: misc-list-artifacts-dir
+        env:
+          GITHUB_REF: "refs/tags/v0.0.1"
+        run: |
+          ls -lah ${GITHUB_WORKSPACE}/artifacts
+
+      - name: Create Linux Installer
+        id: create-linux-installer
+        run: |
+          cp ${GITHUB_WORKSPACE}/artifacts/linux/latest/archpt_agent_linux_x86-64.zip ./archpt_agent.zip
+          makeself ./ deadline-cloud-submitters-v0.1.0-x86-64-installers.run "Deadline Cloud Submitters - Arch" ./liunux/setup.sh
+
+          cp archpt-agent-linux-x86-64-installer.run ${GITHUB_WORKSPACE}/artifacts/linux/latest/archpt-agent-linux-x86-64.run
+          cp archpt-agent-linux-x86-64-installer.run ${GITHUB_WORKSPACE}/artifacts/linux/archpt-agent-linux-x86-64-${GITHUB_REF##*/}.run
+
+          echo "linux-installer-name=archpt-agent-linux-x86-64-${GITHUB_REF##*/}.run" >> $GITHUB_OUTPUT
+          echo "linux-installer-path=${GITHUB_WORKSPACE}/artifacts/linux/archpt-agent-linux-x86-64-${GITHUB_REF##*/}.run" >> $GITHUB_OUTPUT
+
+      - name: Upload Release Asset
+        id: upload-release-asset-linux
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: "v0.0.1"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            ${{steps.build-source-deadline-cloud.outputs.linux-deadline-whl-path}}
+            ${{steps.build-source-deadline-cloud.outputs.linux-deadline-tar-path}}
+            ${{steps.build-deps.outputs.linux-deadline-dependency-path}}
+            ${{steps.build-source-maya.outputs.linux-maya-whl-path}}
+            ${{steps.build-source-nuke.outputs.linux-nuke-whl-path}}
+            ${{steps.build-source-cinema-4d.outputs.linux-cinema-whl-path}}
+            ${{steps.build-source-cinema-4d.outputs.linux-cinema-plugin-path}}
+            ${{steps.build-source-after-effects.outputs.linux-after-effects-jsx-path}}

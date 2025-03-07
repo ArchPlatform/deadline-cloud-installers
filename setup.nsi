@@ -21,6 +21,7 @@ Var /GLOBAL switch_overwrite
 Push `${line}`
 Push "${file}"
 !insertmacro CallArtificialFunction WriteLineToFileHelper
+DetailPrint "${line}"
 !macroend
 !macro WriteLineToFileHelper
 Exch $0
@@ -82,7 +83,7 @@ VIAddVersionKey "ProductName"     "${INFO_PRODUCTNAME}"
 ;--------------------------------
 ;General
 Name "${INFO_PRODUCTNAME}"
-OutFile "${INFO_PROJECTNAME}-v${INFO_PRODUCTVERSION}-${ARCH}-installer.exe"
+OutFile "${INFO_PROJECTNAME}-${ARCH}-installer.exe"
 
 Icon ".\resources\icon.ico"
 UninstallIcon ".\resources\icon.ico"
@@ -99,6 +100,8 @@ RequestExecutionLevel "${REQUEST_EXECUTION_LEVEL}"
 ;Variables that we may need later in the script
 Var DefaultUnrealPluginDirectoryTextBox
 Var DefaultUnrealPluginDirectory
+Var DefaultCinema4DInstallationDirectoryTextBox
+Var DefaultCinema4DInstallationDirectory
 Var InstallationOverviewListBox
 Var InstallationOverviewMessage
 Var InstallationOverviewMessageDeadlineClient
@@ -112,14 +115,24 @@ Var InstallationOverviewMessageDeadlineForCinema4D
 Var InstallationOverviewMessageDeadlineForAfterEffects
 Var DidAfterEffectsPluginInstall
 Var AfterEffectsVersion
+Var DidCinema4DPluginInstall
+Var Cinema4DVersion
+Var Cinema4DPythonExe
+
+Var ExitCode
+Var StdOutText
 
 ;--------------------------------
 ;Submitters Version Info
-!define DEADLINE_CLOUD_EXECUTABLE_NAME "deadline-cli-0.48.1.zip"
-!define CINEMA_4D_PLUGIN_NAME "DeadlineCloud-0.3.2.pyp"
-!define CINEMA_4D_LIBRARY_NAME "deadline_cloud_for_cinema_4d-0.3.2-py3-none-any.whl"
-!define AFTER_EFFECTS_PLUGIN_NAME "DeadlineCloudSubmitter-0.1.2.jsx"
-!define MAYA_LIBRARY_NAME "deadline_cloud_for_maya-0.14.1-py3-none-any.whl"
+!define DEADLINE_CLOUD_EXECUTABLE_NAME "deadline-cli-0.0.0.zip"
+!define DEADLINE_CLOUD_LIBRARY_NAME "deadline-0.0.0-py3-none-any.whl"
+!define DEADLINE_CLOUD_LIBRARY_DEPS "deadline-deps-0.0.0-windows.zip"
+!define CINEMA_4D_PLUGIN_NAME "DeadlineCloud-0.0.0.pyp"
+!define CINEMA_4D_LIBRARY_NAME "deadline_cloud_for_cinema_4d-0.0.0-py3-none-any.whl"
+!define AFTER_EFFECTS_PLUGIN_NAME "DeadlineCloudSubmitter-0.0.0.jsx"
+!define MAYA_LIBRARY_NAME "deadline_cloud_for_maya-0.0.0-py3-none-any.whl"
+!define PYSIDE_LIBRARY_NAME "PySide6_Essentials-0.0.0-cp39-abi3-win_amd64.whl"
+!define SHIBOKEN_LIBRARY_NAME "shiboken6-0.0.0-cp39-abi3-win_amd64.whl"
 
 ;--------------------------------
 ; General Image settings
@@ -168,6 +181,7 @@ Var AfterEffectsVersion
 !insertmacro MUI_PAGE_COMPONENTS
 Page Custom CheckInstalledAfterEffectsVersion
 Page Custom CreateUnrealEnginePluginPage LeaveUnrealEnginePluginPage
+Page Custom CreateCinema4DInstallationPage LeaveCinema4DInstallationPage
 Page Custom CreateInstallationOverview LeaveInstallationOverview
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
@@ -197,6 +211,7 @@ Section "Deadline Cloud" deadline_cloud
 - Installs the Deadline protocol handler to handle the "deadline" URI scheme (e.g. for downloading job output)
 - Configures the Deadline Client as specified in the installer
 	*/
+	${LogLine} "$INSTDIR\install.log" "-------------------------------------------------"
     ${LogLine} "$INSTDIR\install.log" "Starting installing Deadline Cloud DeadlineClient"
     SetShellVarContext all
     ${LogLine} "$INSTDIR\install.log" "Creating temp directory"
@@ -205,10 +220,60 @@ Section "Deadline Cloud" deadline_cloud
     CreateDirectory "$INSTDIR\DeadlineClient"
 
     SetOutPath "$INSTDIR\tmp"
+    File ".\dist\${DEADLINE_CLOUD_LIBRARY_NAME}"
+    File ".\dist\${DEADLINE_CLOUD_LIBRARY_DEPS}"
 
     ${LogLine} "$INSTDIR\install.log" "Extracting ${DEADLINE_CLOUD_EXECUTABLE_NAME}"
     File ".\dist\${DEADLINE_CLOUD_EXECUTABLE_NAME}"
     nsisunz::UnzipToStack "$INSTDIR\tmp\${DEADLINE_CLOUD_EXECUTABLE_NAME}" "$INSTDIR\DeadlineClient"
+    Pop $0
+    StrCmp $0 "success" ok
+      ${LogLine} "$INSTDIR\install.log" "Error: $0"
+      Goto skiplist
+    ok:
+    ; Print out list of files extracted to log
+    next:
+      Pop $0
+      ${LogLine} "$INSTDIR\install.log" "  $0"
+    StrCmp $0 "" 0 next ; pop strings until a blank one arrives
+
+    skiplist:
+
+    ${LogLine} "$INSTDIR\install.log" "Updating PATH variable"
+    EnVar::AddValue "path" "$INSTDIR\DeadlineClient"
+
+    ${LogLine} "$INSTDIR\install.log" "Adding URI Handler"
+    SetRegView 64
+    WriteRegStr HKCR "deadline" "URL Protocol" ""
+    WriteRegStr HKCR "deadline\shell\open\command" "" '"$INSTDIR\DeadlineClient\deadline.exe" "handle-web-url" "%1"'
+    ${LogLine} "$INSTDIR\install.log" "Finished installing DeadlineClient"
+    ${LogLine} "$INSTDIR\install.log" "-------------------------------------------------"
+
+SectionEnd
+LangString DESC_deadline_cloud ${LANG_ENGLISH} "CLI for interfacing with Deadline."
+
+Section "Deadline Cloud for Maya" deadline_cloud_for_maya
+	/*
+Deadline Cloud for Maya 2024
+- Compatible with Maya 2024.
+- Install the integrated Maya submitter files to the installation directory.
+- Register the plug-in with Maya by creating or updating the MAYA_MODULE_PATH environment variable.
+
+- whl goes into $INST\Submitters\Maya\scripts
+- Move $INST\Submitters\Maya\scripts\deadline\maya_submitter\maya_submitter_plugin\* to $INST\Submitters\Maya\
+	*/
+	${LogLine} "$INSTDIR\install.log" "-------------------------------------------------"
+	${LogLine} "$INSTDIR\install.log" "Starting installing Deadline Cloud Maya"
+    SetShellVarContext all
+    CreateDirectory "$INSTDIR\Submitters\Maya"
+    ${LogLine} "$INSTDIR\install.log" "Creating Maya scripts directory"
+    CreateDirectory "$INSTDIR\Submitters\Maya\scripts"
+
+    ; Install the deadline-cloud-for-maya libraries
+    SetOutPath "$INSTDIR\tmp"
+    ${LogLine} "$INSTDIR\install.log" "Installing ${MAYA_LIBRARY_NAME}, ${DEADLINE_CLOUD_LIBRARY_NAME} and dependencies"
+    File ".\dist\${MAYA_LIBRARY_NAME}"
+    nsisunz::UnzipToStack "$INSTDIR\tmp\${MAYA_LIBRARY_NAME}" "$INSTDIR\Submitters\Maya\scripts"
     Pop $0
     StrCmp $0 "success" ok
       DetailPrint "$0" ;print error message to log
@@ -224,19 +289,7 @@ Section "Deadline Cloud" deadline_cloud
 
     skiplist:
 
-    ${LogLine} "$INSTDIR\install.log" "Updating PATH variable"
-    EnVar::AddValue "path" "$INSTDIR\DeadlineClient"
-
-    ${LogLine} "$INSTDIR\install.log" "Adding URI Handler"
-    SetRegView 64
-    WriteRegStr HKCR "deadline" "URL Protocol" ""
-    WriteRegStr HKCR "deadline\shell\open\command" "" '"$INSTDIR\DeadlineClient\deadline.exe" "handle-web-url" "%1"'
-    ${LogLine} "$INSTDIR\install.log" "Finished installing DeadlineClient"
-
-    ${LogLine} "$INSTDIR\install.log" "Installing Python 3.10"
-    SetOutPath "$INSTDIR\tmp"
-    File ".\dist\Python3.10.11.zip"
-    nsisunz::UnzipToStack "$INSTDIR\tmp\Python3.10.11.zip" "$INSTDIR"
+    nsisunz::UnzipToStack "$INSTDIR\tmp\${DEADLINE_CLOUD_LIBRARY_NAME}" "$INSTDIR\Submitters\Maya\scripts"
     Pop $0
     StrCmp $0 "success" ok2
       DetailPrint "$0" ;print error message to log
@@ -252,45 +305,21 @@ Section "Deadline Cloud" deadline_cloud
 
     skiplist2:
 
-SectionEnd
-LangString DESC_deadline_cloud ${LANG_ENGLISH} "CLI for interfacing with Deadline."
+    nsisunz::UnzipToStack "$INSTDIR\tmp\${DEADLINE_CLOUD_LIBRARY_DEPS}" "$INSTDIR\Submitters\Maya\scripts"
+    Pop $0
+    StrCmp $0 "success" ok3
+      DetailPrint "$0" ;print error message to log
+      ${LogLine} "$INSTDIR\install.log" "Error: $0"
+      Goto skiplist3
+    ok3:
+    ; Print out list of files extracted to log
+    next3:
+      Pop $0
+      DetailPrint $0
+      ${LogLine} "$INSTDIR\install.log" "  $0"
+    StrCmp $0 "" 0 next3 ; pop strings until a blank one arrives
 
-Section "Deadline Cloud for Maya" deadline_cloud_for_maya
-	/*
-Deadline Cloud for Maya 2024
-- Compatible with Maya 2024.
-- Install the integrated Maya submitter files to the installation directory.
-- Register the plug-in with Maya by creating or updating the MAYA_MODULE_PATH environment variable.
-
-- whl goes into $INST\Submitters\Maya\scripts
-- Move $INST\Submitters\Maya\scripts\deadline\maya_submitter\maya_submitter_plugin\* to $INST\Submitters\Maya\
-	*/
-	${LogLine} "$INSTDIR\install.log" "Starting installing Deadline Cloud Maya"
-    SetShellVarContext all
-    CreateDirectory "$INSTDIR\Submitters\Maya"
-    ${LogLine} "$INSTDIR\install.log" "Creating Maya scripts directory"
-    CreateDirectory "$INSTDIR\Submitters\Maya\scripts"
-
-    ; Install the deadline-cloud-for-maya libraries
-    SetOutPath "$INSTDIR\tmp"
-    ${LogLine} "$INSTDIR\install.log" "Extracting ${MAYA_LIBRARY_NAME}"
-    File ".\dist\${MAYA_LIBRARY_NAME}"
-    ExecWait '"$INSTDIR\Python3.10.11\python.exe" -m pip install $INSTDIR\tmp\${MAYA_LIBRARY_NAME} --target $INSTDIR\Submitters\Maya\scripts'
-    ; nsisunz::UnzipToStack "$INSTDIR\tmp\${MAYA_LIBRARY_NAME}" "$INSTDIR\Submitters\Maya\scripts"
-    ; Pop $0
-    ; StrCmp $0 "success" ok
-    ;   DetailPrint "$0" ;print error message to log
-    ;   ${LogLine} "$INSTDIR\install.log" "Error: $0"
-    ;   Goto skiplist
-    ; ok:
-    ; ; Print out list of files extracted to log
-    ; next:
-    ;   Pop $0
-    ;   DetailPrint $0
-    ;   ${LogLine} "$INSTDIR\install.log" "  $0"
-    ; StrCmp $0 "" 0 next ; pop strings until a blank one arrives
-    ;
-    ; skiplist:
+    skiplist3:
 
     ${LogLine} "$INSTDIR\install.log" "Moving bundled module files to $INSTDIR\Submitters\Maya"
     !insertmacro MoveFolder "$INSTDIR\Submitters\Maya\scripts\deadline\maya_submitter\maya_submitter_plugin\" "$INSTDIR\Submitters\Maya\" "*.*"
@@ -299,6 +328,7 @@ Deadline Cloud for Maya 2024
     ${LogLine} "$INSTDIR\install.log" "Adding MAYA_MODULE_PATH variable"
     EnVar::AddValue "MAYA_MODULE_PATH" "$INSTDIR\Submitters\Maya"
     ${LogLine} "$INSTDIR\install.log" "Finished installing Deadline Cloud Maya"
+    ${LogLine} "$INSTDIR\install.log" "-------------------------------------------------"
 SectionEnd
 LangString DESC_deadline_cloud_for_maya ${LANG_ENGLISH} "Maya plugin for submitting jobs to AWS Deadline Cloud. Compatible with Maya 2023+"
 
@@ -369,8 +399,10 @@ Deadline Cloud for Cinema 4D S26
 - Install DeadlineCloud.pyp plug-in to the installation directory.
 - Register the plug-in with Cinema 4D by creating or updating the g_additionalModulePath environment variable.
 - Install the deadline-cloud-for-cinema-4d libraries to the installation directory
-- Register the libraries with Deadline Cloud by creating or updating the CINEMA4D_DEADLINE_CLOUD_PYTHONPATH environment variable.
+- Register the libraries with Deadline Cloud by creating or updating the DEADLINE_CLOUD_PYTHONPATH environment variable.
+# TODO: Install PySide2 dependency with this
 	*/
+	${LogLine} "$INSTDIR\install.log" "-------------------------------------------------"
 	${LogLine} "$INSTDIR\install.log" "Starting installing Deadline Cloud Cinema 4D"
     SetShellVarContext all
     CreateDirectory "$INSTDIR\Submitters\Cinema4D"
@@ -387,30 +419,88 @@ Deadline Cloud for Cinema 4D S26
 
     ; Install the deadline-cloud-for-cinema-4d libraries
     SetOutPath "$INSTDIR\tmp"
-    ${LogLine} "$INSTDIR\install.log" "Installing ${CINEMA_4D_LIBRARY_NAME}"
+    ${LogLine} "$INSTDIR\install.log" "Installing ${CINEMA_4D_LIBRARY_NAME}, ${DEADLINE_CLOUD_LIBRARY_NAME} and dependencies"
     File ".\dist\${CINEMA_4D_LIBRARY_NAME}"
-    ;Exec 'python.exe -m pip install "$INSTDIR\tmp\${CINEMA_4D_LIBRARY_NAME}" --target "$INSTDIR\Submitters\Cinema4D"'
-    ${LogLine} "$INSTDIR\install.log" "Extracting ${CINEMA_4D_LIBRARY_NAME}"
-    ExecWait '"$INSTDIR\Python3.10.11\python.exe" -m pip install $INSTDIR\tmp\${CINEMA_4D_LIBRARY_NAME} --target $INSTDIR\Submitters\Cinema4D'
-    ; nsisunz::UnzipToStack "$INSTDIR\tmp\${CINEMA_4D_LIBRARY_NAME}" "$INSTDIR\Submitters\Cinema4D"
-    ; Pop $0
-    ; StrCmp $0 "success" ok
-    ;   DetailPrint "$0" ;print error message to log
-    ;   ${LogLine} "$INSTDIR\install.log" "Error: $0"
-    ;   Goto skiplist
-    ; ok:
-    ; ; Print out list of files extracted to log
-    ; next:
-    ;   Pop $0
-    ;   DetailPrint $0
-    ;   ${LogLine} "$INSTDIR\install.log" "  $0"
-    ; StrCmp $0 "" 0 next ; pop strings until a blank one arrives
-    ;
-    ; skiplist:
+    nsisunz::UnzipToStack "$INSTDIR\tmp\${CINEMA_4D_LIBRARY_NAME}" "$INSTDIR\Submitters\Cinema4D"
+    Pop $0
+    StrCmp $0 "success" ok
+      DetailPrint "$0" ;print error message to log
+      ${LogLine} "$INSTDIR\install.log" "Error: $0"
+      Goto skiplist
+    ok:
+    ; Print out list of files extracted to log
+    next:
+      Pop $0
+      DetailPrint $0
+      ${LogLine} "$INSTDIR\install.log" "  $0"
+    StrCmp $0 "" 0 next ; pop strings until a blank one arrives
 
-    ${LogLine} "$INSTDIR\install.log" "Adding CINEMA4D_DEADLINE_CLOUD_PYTHONPATH"
-    EnVar::AddValue "CINEMA4D_DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
+    skiplist:
+
+    nsisunz::UnzipToStack "$INSTDIR\tmp\${DEADLINE_CLOUD_LIBRARY_NAME}" "$INSTDIR\Submitters\Cinema4D"
+    Pop $0
+    StrCmp $0 "success" ok2
+      DetailPrint "$0" ;print error message to log
+      ${LogLine} "$INSTDIR\install.log" "Error: $0"
+      Goto skiplist2
+    ok2:
+    ; Print out list of files extracted to log
+    next2:
+      Pop $0
+      DetailPrint $0
+      ${LogLine} "$INSTDIR\install.log" "  $0"
+    StrCmp $0 "" 0 next2 ; pop strings until a blank one arrives
+
+    skiplist2:
+
+    nsisunz::UnzipToStack "$INSTDIR\tmp\${DEADLINE_CLOUD_LIBRARY_DEPS}" "$INSTDIR\Submitters\Cinema4D"
+    Pop $0
+    StrCmp $0 "success" ok3
+      DetailPrint "$0" ;print error message to log
+      ${LogLine} "$INSTDIR\install.log" "Error: $0"
+      Goto skiplist3
+    ok3:
+    ; Print out list of files extracted to log
+    next3:
+      Pop $0
+      DetailPrint $0
+      ${LogLine} "$INSTDIR\install.log" "  $0"
+    StrCmp $0 "" 0 next3 ; pop strings until a blank one arrives
+
+    skiplist3:
+
+
+    ${LogLine} "$INSTDIR\install.log" "About to find files"
+    FindFirst $0 $1 "$DefaultCinema4DInstallationDirectory\resource\modules\python\libs\*win64*"
+    loop:
+        StrCmp $1 "" end ; No more files?
+        StrCmp $1 "." next ; DOS special name
+        StrCmp $1 ".." next ; DOS special name
+        ${LogLine} "$INSTDIR\install.log" "  Found $1"
+        ${LogLine} "$INSTDIR\install.log" "  Does $DefaultCinema4DInstallationDirectory\resource\modules\python\libs\$1\python.exe exist?"
+        ${If} ${FileExists} "$DefaultCinema4DInstallationDirectory\resource\modules\python\libs\$1\python.exe"
+            StrCpy $Cinema4DPythonExe "$DefaultCinema4DInstallationDirectory\resource\modules\python\libs\$1\python.exe"
+            Call InstallPySide
+        ${EndIf}
+        Goto end ; This stops the search at the first folder it finds
+    end:
+    FindClose $0
+    ${LogLine} "$INSTDIR\install.log" "Done to find files"
+
+    ${LogLine} "$INSTDIR\install.log" "Adding DEADLINE_CLOUD_PYTHONPATH"
+    EnVar::AddValue "DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
+
+    ${LogLine} "$INSTDIR\install.log" "Adding C4DPYTHONPATH39"
+    EnVar::AddValue "C4DPYTHONPATH39" "$INSTDIR\Submitters\Cinema4D"
+
+    ${LogLine} "$INSTDIR\install.log" "Adding C4DPYTHONPATH310"
+    EnVar::AddValue "C4DPYTHONPATH310" "$INSTDIR\Submitters\Cinema4D"
+
+    ${LogLine} "$INSTDIR\install.log" "Adding C4DPYTHONPATH311"
+    EnVar::AddValue "C4DPYTHONPATH311" "$INSTDIR\Submitters\Cinema4D"
+
     ${LogLine} "$INSTDIR\install.log" "Finished installing Deadline Cloud Cinema 4D"
+    ${LogLine} "$INSTDIR\install.log" "-------------------------------------------------"
 SectionEnd
 LangString DESC_deadline_cloud_for_cinema_4d ${LANG_ENGLISH} "Cinema 4D plugin for submitting jobs to AWS Deadline Cloud. Compatible with Cinema 4D S26+"
 
@@ -421,7 +511,7 @@ Deadline Cloud for After Effects 2023
 - Compatible with After Effects 2023+.
 - Install the DeadlineCloudSubmitter.jsx plug-in to the scripts directory of After Effects.
 	*/
-
+	${LogLine} "$INSTDIR\install.log" "-------------------------------------------------"
     ${LogLine} "$INSTDIR\install.log" "Starting installing Deadline Cloud After Effects"
     SetShellVarContext all
 
@@ -435,13 +525,14 @@ Deadline Cloud for After Effects 2023
         ${EndIf}
     ${Next}
     ${LogLine} "$INSTDIR\install.log" "Finished installing Deadline Cloud After Effects"
+    ${LogLine} "$INSTDIR\install.log" "-------------------------------------------------"
 SectionEnd
-LangString DESC_deadline_cloud_for_after_effects ${LANG_ENGLISH} "Cinema 4D plugin for submitting jobs to AWS Deadline Cloud. Compatible with Cinema 4D S26+"
+LangString DESC_deadline_cloud_for_after_effects ${LANG_ENGLISH} "After Effects plugin for submitting jobs to AWS Deadline Cloud. Compatible with After Effects 2023+"
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${deadline_cloud} $(DESC_deadline_cloud)
-  !insertmacro MUI_DESCRIPTION_TEXT ${deadline_cloud_for_nuke} $(DESC_deadline_cloud_for_nuke)
   !insertmacro MUI_DESCRIPTION_TEXT ${deadline_cloud_for_maya} $(DESC_deadline_cloud_for_maya)
+  !insertmacro MUI_DESCRIPTION_TEXT ${deadline_cloud_for_nuke} $(DESC_deadline_cloud_for_nuke)
   !insertmacro MUI_DESCRIPTION_TEXT ${deadline_cloud_for_houdini} $(DESC_deadline_cloud_for_houdini)
   !insertmacro MUI_DESCRIPTION_TEXT ${deadline_cloud_for_keyshot} $(DESC_deadline_cloud_for_keyshot)
   !insertmacro MUI_DESCRIPTION_TEXT ${deadline_cloud_for_blender} $(DESC_deadline_cloud_for_blender)
@@ -460,16 +551,22 @@ Function .onInit
 
     !insertmacro SelectSection ${deadline_cloud}
     !insertmacro SetSectionFlag ${deadline_cloud} ${SF_RO}
-    !insertmacro UnselectSection ${deadline_cloud_for_nuke}
     !insertmacro UnselectSection ${deadline_cloud_for_maya}
+    !insertmacro UnselectSection ${deadline_cloud_for_nuke}
+    !insertmacro SetSectionFlag ${deadline_cloud_for_nuke} ${SF_RO}
     !insertmacro UnselectSection ${deadline_cloud_for_houdini}
+    !insertmacro SetSectionFlag ${deadline_cloud_for_houdini} ${SF_RO}
     !insertmacro UnselectSection ${deadline_cloud_for_keyshot}
+    !insertmacro SetSectionFlag ${deadline_cloud_for_keyshot} ${SF_RO}
     !insertmacro UnselectSection ${deadline_cloud_for_blender}
+    !insertmacro SetSectionFlag ${deadline_cloud_for_blender} ${SF_RO}
     !insertmacro UnselectSection ${deadline_cloud_for_unreal_engine}
+    !insertmacro SetSectionFlag ${deadline_cloud_for_unreal_engine} ${SF_RO}
     !insertmacro UnselectSection ${deadline_cloud_for_cinema_4d}
     !insertmacro UnselectSection ${deadline_cloud_for_after_effects}
 
     StrCpy $DefaultUnrealPluginDirectory "C:\Program Files\Epic Games\UE_5.2\Engine\Plugins\UnrealDeadlineCloudService"
+    Call FindInstalledCinema4DVersion
 
     StrCpy $InstallationOverviewMessageDeadlineClient "Deadline Client$\r$\n- Installs the Deadline Client CLI application to the installation directory$\r$\n- Updates the PATH environment variable to include the path to the Deadline Client CLI$\r$\n- Installs the Deadline protocol handler to handle the deadline:// URI scheme (e.g. for downloading job output)$\r$\n- Configures the Deadline Client as specified in the installer"
     StrCpy $InstallationOverviewMessageDeadlineForNuke "Deadline Cloud for Nuke 14.0-15.0$\r$\n- Compatible with Nuke 14.0-15.0$\r$\n- Install the integrated Nuke submitter files to the installation directory$\r$\n- Register the plug-in with Nuke by creating or updating the NUKE_PATH environment variable."
@@ -478,7 +575,7 @@ Function .onInit
     StrCpy $InstallationOverviewMessageDeadlineForKeyShot "Deadline Cloud for KeyShot$\r$\n- Install the integrated KeyShot submitter files to the installation directory$\r$\n- Register the plug-in with KeyShot by moving the Submit to AWS Deadline Cloud script to the KeyShot scripts folder$\r$\n- Sets the DEADLINE_KEYSHOT environment variable to point the Submit to AWS Deadline Cloud script to the submitter module"
     StrCpy $InstallationOverviewMessageDeadlineForBlender "Deadline Cloud for Blender 3.6$\r$\n- Compatible with Blender 3.6$\r$\n- Install the integrated Blender submitter files to the installation directory"
     StrCpy $InstallationOverviewMessageDeadlineForUnrealEngine "Deadline Cloud for Unreal Engine 5.2.1$\r$\n- Compatible with Unreal Engine 5$\r$\n- Install the Unreal Engine submitter files to the Plugin directory"
-    StrCpy $InstallationOverviewMessageDeadlineForCinema4D "Deadline Cloud for Cinema 4D S26$\r$\n- Compatible with Cinema 4D S26+.$\r$\n- Install DeadlineCloud.pyp plug-in to the installation directory.$\r$\n- Register the plug-in with Cinema 4D by creating or updating the g_additionalModulePath environment variable.$\r$\n- Install the deadline-cloud-for-cinema-4d libraries to the installation directory$\r$\n- Register the libraries with Deadline Cloud by creating or updating the CINEMA4D_DEADLINE_CLOUD_PYTHONPATH environment variable."
+    StrCpy $InstallationOverviewMessageDeadlineForCinema4D "Deadline Cloud for Cinema 4D S26$\r$\n- Compatible with Cinema 4D S26+.$\r$\n- Install DeadlineCloud.pyp plug-in to the installation directory.$\r$\n- Register the plug-in with Cinema 4D by creating or updating the g_additionalModulePath environment variable.$\r$\n- Install the deadline-cloud-for-cinema-4d libraries to the installation directory$\r$\n- Register the libraries with Deadline Cloud by creating or updating the DEADLINE_CLOUD_PYTHONPATH environment variable."
     StrCpy $InstallationOverviewMessageDeadlineForAfterEffects "Deadline Cloud for After Effects 2023$\r$\n- Compatible with After Effects 2023+.$\r$\n- Install the DeadlineCloudSubmitter.jsx plug-in to the scripts directory of After Effects."
 FunctionEnd
 
@@ -492,6 +589,67 @@ FunctionEnd
 ;    NoCancelAbort:
 ;        Call RemoveAll
 ;FunctionEnd
+
+Function FindInstalledCinema4DVersion
+    ${LogLine} "$INSTDIR\install.log" "Looking for Cinema 4D versions installed"
+    ${ForEach} $Cinema4DVersion 2025 2023 - 1
+        ${If} ${FileExists} "C:\Program Files\Maxon Cinema 4D $Cinema4DVersion"
+            ${LogLine} "$INSTDIR\install.log" "  Found Cinema 4D $Cinema4DVersion"
+            StrCpy $DefaultCinema4DInstallationDirectory "C:\Program Files\Maxon Cinema 4D $Cinema4DVersion"
+            StrCpy $DidCinema4DPluginInstall "1"
+        ${EndIf}
+    ${Next}
+
+    ${LogLine} "$INSTDIR\install.log" "Did we find a version of Cinema 4D Installed? $DidCinema4DPluginInstall"
+    ${If} $DidCinema4DPluginInstall != "1"
+        StrCpy $DefaultCinema4DInstallationDirectory "C:\Program Files\Maxon Cinema 4D R26"
+    ${EndIf}
+FunctionEnd
+
+Function CreateCinema4DInstallationPage
+    ${IfNot} ${SectionIsSelected} ${deadline_cloud_for_cinema_4d}
+        Abort
+    ${EndIf}
+    !insertmacro MUI_HEADER_TEXT "Arch Platform Technologies" "Path to the Maxon Cinema 4D installation directory"
+    nsDialogs::Create 1018
+    Pop $0
+    ${NSD_CreateLabel} 0 0 100% 18u "Maxon Cinema 4D installation directory"
+    Pop $0
+
+    ${NSD_CreateGroupBox} 2% 20u 90% 34u "Path to the Maxon Cinema 4D installation directory"
+    Pop $0
+
+        ${NSD_CreateDirRequest} 8% 34u 63% 12u "$DefaultCinema4DInstallationDirectory"
+        Pop $DefaultCinema4DInstallationDirectoryTextBox
+
+        ${NSD_CreateBrowseButton} 72% 34u 15% 12u "Browse..."
+        Pop $0
+        ${NSD_OnClick} $0 OnCinema4DInstallationBrowse
+
+    nsDialogs::Show
+
+FunctionEnd
+
+Function OnCinema4DInstallationBrowse
+    ${NSD_GetText} $DefaultCinema4DInstallationDirectoryTextBox $0
+    nsDialogs::SelectFolderDialog "Select Cinema 4D Installation Directory" "$0"
+    Pop $0
+    ${If} $0 != error
+        ${NSD_SetText} $DefaultCinema4DInstallationDirectoryTextBox "$0"
+    ${EndIf}
+FunctionEnd
+
+Function LeaveCinema4DInstallationPage
+    ${NSD_GetText} $DefaultCinema4DInstallationDirectoryTextBox $DefaultCinema4DInstallationDirectory
+    ${If} ${FileExists} $DefaultCinema4DInstallationDirectory
+      ; file is a directory
+    ${Else}
+      MessageBox MB_OK "The directory $DefaultCinema4DInstallationDirectory does not exist"
+      Abort
+      ; file is neither a file or a directory (i.e. it doesn't exist)
+    ${EndIf}
+FunctionEnd
+
 
 Function CheckInstalledAfterEffectsVersion
     ${If} ${SectionIsSelected} ${deadline_cloud_for_after_effects}
@@ -509,6 +667,26 @@ Function CheckInstalledAfterEffectsVersion
             Abort "Install failed. Deadline Cloud for After Effects could not find an installed After Effects installation.$\r$\nDeadline Cloud for After Effects will be unchecked"
         ${EndIf}
     ${EndIf}
+FunctionEnd
+
+Function InstallPySide
+    ${LogLine} "$INSTDIR\install.log" "$Cinema4DPythonExe -m ensurepip"
+    nsExec::ExecToStack '$Cinema4DPythonExe -m ensurepip'
+    Pop $ExitCode
+    Pop $StdOutText
+    ${LogLine} "$INSTDIR\install.log" "  $StdOutText"
+
+	; Exec '$Cinema4DPythonExe -m ensurepip'
+	File ".\dist\${PYSIDE_LIBRARY_NAME}"
+	File ".\dist\${SHIBOKEN_LIBRARY_NAME}"
+	${LogLine} "$INSTDIR\install.log" "$Cinema4DPythonExe -m pip install --no-index --find-links=$INSTDIR\tmp ${PYSIDE_LIBRARY_NAME} ${SHIBOKEN_LIBRARY_NAME}"
+    nsExec::ExecToStack '$Cinema4DPythonExe -m pip install --no-index --find-links="$INSTDIR\tmp" ${PYSIDE_LIBRARY_NAME} ${SHIBOKEN_LIBRARY_NAME}'
+    Pop $ExitCode
+    Pop $StdOutText
+    ${LogLine} "$INSTDIR\install.log" "  $StdOutText"
+	;Exec '$Cinema4DPythonExe -m pip install --no-index --find-links="$INSTDIR\tmp" ${PYSIDE_LIBRARY_NAME} ${SHIBOKEN_LIBRARY_NAME}'
+	StrCpy $0 StopLocate
+	Push $0
 FunctionEnd
 
 Function CreateUnrealEnginePluginPage
@@ -557,7 +735,7 @@ FunctionEnd
 
 
 Function CreateInstallationOverview
-    !insertmacro MUI_HEADER_TEXT "Arch Platform Technologies" "Path to the Deadline Cloud Unreal Plugin directory"
+    !insertmacro MUI_HEADER_TEXT "Arch Platform Technologies" "Installation Overview"
     nsDialogs::Create 1018
     ${NSD_CreateLabel} 0 0 100% 18u "Review the installation"
     Pop $0
@@ -674,8 +852,8 @@ Function RemoveDeadlineCloudForCinema4D
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "Uninstalling Deadline Cloud for Cinema 4D"
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing g_additionalModulePAth modifications"
     EnVar::DeleteValue "g_additionalModulePath" "$INSTDIR\Submitters\Cinema4D\Plugins"
-    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing CINEMA4D_DEADLINE_CLOUD_PYTHONPATH modifications"
-    EnVar::DeleteValue "CINEMA4D_DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing DEADLINE_CLOUD_PYTHONPATH modifications"
+    EnVar::DeleteValue "DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Deadline Cloud for Cinema 4D successfully uninstalled"
 FunctionEnd
 Function un.RemoveDeadlineCloudForCinema4D
@@ -685,8 +863,8 @@ Function un.RemoveDeadlineCloudForCinema4D
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "Uninstalling Deadline Cloud for Cinema 4D"
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing g_additionalModulePAth modifications"
     EnVar::DeleteValue "g_additionalModulePath" "$INSTDIR\Submitters\Cinema4D\Plugins"
-    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing CINEMA4D_DEADLINE_CLOUD_PYTHONPATH modifications"
-    EnVar::DeleteValue "CINEMA4D_DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
+    ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Removing DEADLINE_CLOUD_PYTHONPATH modifications"
+    EnVar::DeleteValue "DEADLINE_CLOUD_PYTHONPATH" "$INSTDIR\Submitters\Cinema4D"
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "  Deadline Cloud for Cinema 4D successfully uninstalled"
 FunctionEnd
 
@@ -750,7 +928,7 @@ Section "Uninstall"
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "Starting uninstall"
     Call un.RemoveAll
     ${LogLine} "$TEMP\deadline_cloud_submitters_uninstall.log" "Uninstall finished"
-    MessageBox MB_OK "Uninstall Finished"
+    ; MessageBox MB_OK "Uninstall Finished"
 
 SectionEnd
 
